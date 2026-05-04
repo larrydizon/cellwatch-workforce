@@ -17,6 +17,7 @@ import Chat from '@/pages/Chat';
 import Notifications from '@/pages/Notifications';
 import Profile from '@/pages/Profile';
 import Settings from '@/pages/Settings';
+import Leave from '@/pages/Leave';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -56,6 +57,7 @@ const AuthenticatedApp = () => {
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/leave" element={<Leave />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

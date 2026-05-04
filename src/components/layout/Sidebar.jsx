@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Calendar, Briefcase, Clock,
   FileText, MessageSquare, Settings, ChevronLeft, ChevronRight,
-  ClipboardList, Bell
+  ClipboardList, Bell, UmbrellaOff
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -14,6 +14,7 @@ const navItems = [
   { label: 'Jobs', icon: Briefcase, path: '/jobs' },
   { label: 'Time Clock', icon: Clock, path: '/time-clock' },
   { label: 'Timesheets', icon: FileText, path: '/timesheets' },
+  { label: 'Leave', icon: UmbrellaOff, path: '/leave' },
   { label: 'Chat', icon: MessageSquare, path: '/chat' },
   { label: 'Notifications', icon: Bell, path: '/notifications' },
   { label: 'Settings', icon: Settings, path: '/settings' },

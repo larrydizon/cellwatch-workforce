@@ -27,13 +27,17 @@ export default function Timesheets() {
   const isAdmin = ['admin', 'operations_manager', 'supervisor'].includes(user?.role);
 
   const { data: entries = [], isLoading } = useQuery({
-    queryKey: ['timesheets', filter],
+    queryKey: ['timesheets', filter, user?.email],
     queryFn: async () => {
-      if (filter === 'all') {
+      if (!user?.email) return [];
+      const baseFilter = isAdmin ? {} : { employee_email: user.email };
+      const statusFilter = filter === 'all' ? baseFilter : { ...baseFilter, status: filter };
+      if (Object.keys(statusFilter).length === 0) {
         return base44.entities.TimeEntry.list('-created_date', 100);
       }
-      return base44.entities.TimeEntry.filter({ status: filter }, '-created_date', 100);
+      return base44.entities.TimeEntry.filter(statusFilter, '-created_date', 100);
     },
+    enabled: !!user?.email,
   });
 
   const approveMutation = useMutation({

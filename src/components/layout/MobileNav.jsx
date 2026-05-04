@@ -1,14 +1,14 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Briefcase, Clock, MessageSquare, User } from 'lucide-react';
+import { LayoutDashboard, Briefcase, Clock, MessageSquare, UmbrellaOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const mobileItems = [
   { label: 'Home', icon: LayoutDashboard, path: '/' },
   { label: 'Jobs', icon: Briefcase, path: '/jobs' },
   { label: 'Clock', icon: Clock, path: '/time-clock' },
+  { label: 'Leave', icon: UmbrellaOff, path: '/leave' },
   { label: 'Chat', icon: MessageSquare, path: '/chat' },
-  { label: 'Profile', icon: User, path: '/profile' },
 ];
 
 export default function MobileNav() {

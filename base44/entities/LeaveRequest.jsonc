@@ -1,0 +1,64 @@
+{
+  "name": "LeaveRequest",
+  "type": "object",
+  "properties": {
+    "employee_email": {
+      "type": "string"
+    },
+    "employee_name": {
+      "type": "string"
+    },
+    "leave_type": {
+      "type": "string",
+      "enum": [
+        "annual",
+        "sick",
+        "bereavement",
+        "unpaid",
+        "other"
+      ],
+      "default": "annual"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "days_requested": {
+      "type": "number"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "declined"
+      ],
+      "default": "pending"
+    },
+    "admin_notes": {
+      "type": "string",
+      "description": "Notes from admin when approving or declining"
+    },
+    "reviewed_by": {
+      "type": "string",
+      "description": "Email of admin who reviewed"
+    },
+    "reviewed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "employee_email",
+    "leave_type",
+    "start_date",
+    "end_date"
+  ]
+}

@@ -30,11 +30,25 @@ export default function Schedule() {
   });
   const queryClient = useQueryClient();
 
+  // Get current user for role-based access
+  const { data: currentUser } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: () => base44.auth.me(),
+  });
+  const isAdmin = ['admin', 'operations_manager', 'supervisor'].includes(currentUser?.role);
+
   const weekDays = Array.from({ length: 7 }, (_, i) => currentWeek.clone().add(i, 'days'));
 
   const { data: shifts = [] } = useQuery({
-    queryKey: ['shifts', currentWeek.format()],
-    queryFn: () => base44.entities.Shift.list('-start_time', 200),
+    queryKey: ['shifts', currentWeek.format(), currentUser?.email],
+    queryFn: async () => {
+      if (!currentUser?.email) return [];
+      if (isAdmin) {
+        return base44.entities.Shift.list('-start_time', 200);
+      }
+      return base44.entities.Shift.filter({ assigned_to: currentUser.email }, '-start_time', 200);
+    },
+    enabled: !!currentUser?.email,
   });
 
   const { data: users = [] } = useQuery({
@@ -73,9 +87,11 @@ export default function Schedule() {
           <Button variant="outline" size="icon" onClick={() => setCurrentWeek(w => w.clone().add(1, 'week'))}>
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <Button onClick={() => setCreateOpen(true)} className="gap-2 ml-2">
-            <Plus className="h-4 w-4" /> Add Shift
-          </Button>
+          {isAdmin && (
+            <Button onClick={() => setCreateOpen(true)} className="gap-2 ml-2">
+              <Plus className="h-4 w-4" /> Add Shift
+            </Button>
+          )}
         </div>
       </div>
 
