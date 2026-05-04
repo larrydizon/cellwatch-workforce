@@ -1,0 +1,74 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "operations_manager",
+        "supervisor",
+        "technician",
+        "casual_worker",
+        "client_viewer"
+      ],
+      "default": "technician",
+      "description": "User role in the system"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Phone number"
+    },
+    "job_title": {
+      "type": "string",
+      "description": "Job title"
+    },
+    "employment_type": {
+      "type": "string",
+      "enum": [
+        "full_time",
+        "part_time",
+        "casual",
+        "subcontractor"
+      ],
+      "default": "full_time"
+    },
+    "pay_rate": {
+      "type": "number",
+      "description": "Hourly pay rate in NZD"
+    },
+    "team": {
+      "type": "string",
+      "description": "Assigned team name"
+    },
+    "emergency_contact_name": {
+      "type": "string"
+    },
+    "emergency_contact_phone": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "suspended",
+        "archived"
+      ],
+      "default": "active"
+    },
+    "profile_photo": {
+      "type": "string",
+      "description": "URL of profile photo"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "role"
+  ]
+}

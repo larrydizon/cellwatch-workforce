@@ -1,0 +1,45 @@
+{
+  "name": "Conversation",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Conversation title"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "direct",
+        "group",
+        "job",
+        "announcement"
+      ],
+      "default": "direct"
+    },
+    "participants": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Array of participant emails"
+    },
+    "job_id": {
+      "type": "string",
+      "description": "Associated job ID for job chats"
+    },
+    "last_message": {
+      "type": "string"
+    },
+    "last_message_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_message_by": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "type",
+    "participants"
+  ]
+}

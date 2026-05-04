@@ -1,0 +1,83 @@
+{
+  "name": "TimeEntry",
+  "type": "object",
+  "properties": {
+    "employee_email": {
+      "type": "string",
+      "description": "Email of the employee"
+    },
+    "employee_name": {
+      "type": "string"
+    },
+    "job_id": {
+      "type": "string",
+      "description": "Associated job ID"
+    },
+    "job_title": {
+      "type": "string"
+    },
+    "clock_in": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Clock in timestamp"
+    },
+    "clock_out": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Clock out timestamp"
+    },
+    "clock_in_lat": {
+      "type": "number"
+    },
+    "clock_in_lng": {
+      "type": "number"
+    },
+    "clock_out_lat": {
+      "type": "number"
+    },
+    "clock_out_lng": {
+      "type": "number"
+    },
+    "break_start": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "break_end": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "total_hours": {
+      "type": "number"
+    },
+    "break_minutes": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "completed",
+        "pending_approval",
+        "approved",
+        "rejected",
+        "adjustment_requested"
+      ],
+      "default": "active"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "approved_by": {
+      "type": "string"
+    },
+    "is_overtime": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "employee_email",
+    "clock_in",
+    "status"
+  ]
+}

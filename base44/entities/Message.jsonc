@@ -1,0 +1,42 @@
+{
+  "name": "Message",
+  "type": "object",
+  "properties": {
+    "conversation_id": {
+      "type": "string",
+      "description": "ID of the conversation"
+    },
+    "sender_email": {
+      "type": "string"
+    },
+    "sender_name": {
+      "type": "string"
+    },
+    "content": {
+      "type": "string"
+    },
+    "attachments": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Array of file URLs"
+    },
+    "read_by": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Emails of users who have read this message"
+    },
+    "is_announcement": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "conversation_id",
+    "sender_email",
+    "content"
+  ]
+}

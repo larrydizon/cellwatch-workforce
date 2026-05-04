@@ -1,0 +1,113 @@
+{
+  "name": "Job",
+  "type": "object",
+  "properties": {
+    "job_number": {
+      "type": "string",
+      "description": "Unique job reference number"
+    },
+    "title": {
+      "type": "string",
+      "description": "Job title"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "site_address": {
+      "type": "string"
+    },
+    "scope_of_work": {
+      "type": "string",
+      "description": "Description of work to be done"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "urgent"
+      ],
+      "default": "medium"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "new",
+        "scheduled",
+        "in_progress",
+        "waiting",
+        "completed",
+        "cancelled",
+        "invoiced"
+      ],
+      "default": "new"
+    },
+    "assigned_workers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Array of user emails assigned to this job"
+    },
+    "estimated_hours": {
+      "type": "number"
+    },
+    "actual_hours": {
+      "type": "number"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "job_type": {
+      "type": "string",
+      "enum": [
+        "fibre",
+        "cctv",
+        "cabling",
+        "telecom",
+        "maintenance",
+        "installation",
+        "other"
+      ],
+      "default": "other"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "photos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Array of photo URLs"
+    },
+    "materials_used": {
+      "type": "string"
+    },
+    "equipment_installed": {
+      "type": "string"
+    },
+    "serial_numbers": {
+      "type": "string"
+    },
+    "safety_notes": {
+      "type": "string"
+    },
+    "attachments": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "title",
+    "status"
+  ]
+}

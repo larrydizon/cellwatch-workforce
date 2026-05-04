@@ -1,0 +1,42 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "recipient_email": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "shift_assigned",
+        "shift_changed",
+        "timesheet_rejected",
+        "task_assigned",
+        "announcement",
+        "leave_approved",
+        "leave_rejected",
+        "general"
+      ],
+      "default": "general"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false
+    },
+    "link": {
+      "type": "string",
+      "description": "URL or route to navigate to"
+    }
+  },
+  "required": [
+    "recipient_email",
+    "title",
+    "message"
+  ]
+}

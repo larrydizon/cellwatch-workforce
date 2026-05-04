@@ -1,0 +1,78 @@
+{
+  "name": "Shift",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Shift title"
+    },
+    "job_id": {
+      "type": "string"
+    },
+    "job_title": {
+      "type": "string"
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "Email of assigned employee"
+    },
+    "assigned_name": {
+      "type": "string"
+    },
+    "start_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "end_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "site_address": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "required_tools": {
+      "type": "string"
+    },
+    "safety_notes": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "scheduled",
+        "accepted",
+        "declined",
+        "change_requested",
+        "completed",
+        "cancelled"
+      ],
+      "default": "scheduled"
+    },
+    "is_recurring": {
+      "type": "boolean",
+      "default": false
+    },
+    "recurrence_pattern": {
+      "type": "string",
+      "enum": [
+        "daily",
+        "weekly",
+        "fortnightly",
+        "monthly"
+      ],
+      "description": "Recurrence pattern if recurring"
+    }
+  },
+  "required": [
+    "title",
+    "assigned_to",
+    "start_time",
+    "end_time"
+  ]
+}
