@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Search, MapPin, Users, Clock, Briefcase } from 'lucide-react';
 import { toast } from 'sonner';
+import { useOutletContext } from 'react-router-dom';
 
 const statusColors = {
   new: "bg-blue-50 text-blue-700 border-blue-200",
@@ -30,6 +31,8 @@ const priorityColors = {
 };
 
 export default function Jobs() {
+  const { user } = useOutletContext();
+  const isAdmin = ['admin', 'operations_manager', 'supervisor'].includes(user?.role);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [createOpen, setCreateOpen] = useState(false);
@@ -37,8 +40,9 @@ export default function Jobs() {
   const queryClient = useQueryClient();
 
   const { data: jobs = [], isLoading } = useQuery({
-    queryKey: ['jobs'],
+    queryKey: ['jobs', user?.email],
     queryFn: () => base44.entities.Job.list('-created_date', 100),
+    enabled: !!user?.email,
   });
 
   const createMutation = useMutation({
@@ -55,7 +59,10 @@ export default function Jobs() {
     },
   });
 
-  const filtered = jobs.filter(j => {
+  // Employees only see jobs assigned to them
+  const visibleJobs = isAdmin ? jobs : jobs.filter(j => j.assigned_workers?.includes(user?.email));
+
+  const filtered = visibleJobs.filter(j => {
     const matchSearch = j.title?.toLowerCase().includes(search.toLowerCase()) ||
       j.client_name?.toLowerCase().includes(search.toLowerCase()) ||
       j.job_number?.toLowerCase().includes(search.toLowerCase());
@@ -67,12 +74,16 @@ export default function Jobs() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Jobs</h1>
-          <p className="text-sm text-muted-foreground mt-1">{jobs.length} total jobs</p>
+          <h1 className="text-2xl font-bold tracking-tight">{isAdmin ? 'Jobs' : 'My Jobs'}</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {isAdmin ? `${jobs.length} total jobs` : `${visibleJobs.length} job${visibleJobs.length !== 1 ? 's' : ''} assigned to you`}
+          </p>
         </div>
-        <Button onClick={() => setCreateOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" /> New Job
-        </Button>
+        {isAdmin && (
+          <Button onClick={() => setCreateOpen(true)} className="gap-2">
+            <Plus className="h-4 w-4" /> New Job
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
@@ -131,7 +142,7 @@ export default function Jobs() {
           <div className="text-center py-12 text-muted-foreground">
             <Briefcase className="h-12 w-12 mx-auto mb-3 opacity-30" />
             <p className="font-medium">No jobs found</p>
-            <p className="text-sm mt-1">Create your first job to get started</p>
+            <p className="text-sm mt-1">{isAdmin ? 'Create your first job to get started' : 'No jobs assigned to you yet'}</p>
           </div>
         )}
       </div>

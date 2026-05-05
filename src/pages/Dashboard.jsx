@@ -3,94 +3,185 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useOutletContext } from 'react-router-dom';
 import {
-  Users, Clock, Briefcase, AlertTriangle, CheckCircle2, FileText
+  Clock, Briefcase, AlertTriangle, CheckCircle2, FileText, LogIn, LogOut
 } from 'lucide-react';
 import StatCard from '@/components/dashboard/StatCard';
 import ActiveWorkersList from '@/components/dashboard/ActiveWorkersList';
 import TodayJobsList from '@/components/dashboard/TodayJobsList';
 import moment from 'moment';
+import { Badge } from '@/components/ui/badge';
 
 export default function Dashboard() {
   const { user } = useOutletContext();
-  const today = moment().startOf('day').toISOString();
+  const isAdmin = ['admin', 'operations_manager', 'supervisor'].includes(user?.role);
 
-  const { data: timeEntries = [] } = useQuery({
+  // ── Admin queries ──
+  const { data: allTimeEntries = [] } = useQuery({
     queryKey: ['dashboard-time-entries'],
     queryFn: () => base44.entities.TimeEntry.list('-created_date', 50),
+    enabled: isAdmin,
   });
 
-  const { data: jobs = [] } = useQuery({
+  const { data: allJobs = [] } = useQuery({
     queryKey: ['dashboard-jobs'],
     queryFn: () => base44.entities.Job.list('-created_date', 50),
-  });
-
-  const { data: shifts = [] } = useQuery({
-    queryKey: ['dashboard-shifts'],
-    queryFn: () => base44.entities.Shift.list('-start_time', 50),
+    enabled: isAdmin,
   });
 
   const { data: pendingTimesheets = [] } = useQuery({
     queryKey: ['dashboard-pending-timesheets'],
     queryFn: () => base44.entities.TimeEntry.filter({ status: 'pending_approval' }, '-created_date', 50),
+    enabled: isAdmin,
   });
 
-  const activeWorkers = timeEntries.filter(t => t.status === 'active');
-  const todayJobs = jobs.filter(j => j.start_date === moment().format('YYYY-MM-DD'));
-  const completedToday = jobs.filter(j => j.status === 'completed' && j.end_date === moment().format('YYYY-MM-DD'));
-  const overtimeEntries = timeEntries.filter(t => t.is_overtime);
+  // ── Employee queries ──
+  const { data: myActiveEntry = [] } = useQuery({
+    queryKey: ['my-active-entry', user?.email],
+    queryFn: () => base44.entities.TimeEntry.filter({ employee_email: user.email, status: 'active' }, '-created_date', 1),
+    enabled: !isAdmin && !!user?.email,
+  });
 
+  const { data: myJobs = [] } = useQuery({
+    queryKey: ['my-jobs', user?.email],
+    queryFn: () => base44.entities.Job.list('-created_date', 50),
+    enabled: !isAdmin && !!user?.email,
+  });
+
+  const { data: myTimesheets = [] } = useQuery({
+    queryKey: ['my-timesheets', user?.email],
+    queryFn: () => base44.entities.TimeEntry.filter({ employee_email: user.email }, '-created_date', 20),
+    enabled: !isAdmin && !!user?.email,
+  });
+
+  // ── Admin derived ──
+  const activeWorkers = allTimeEntries.filter(t => t.status === 'active');
+  const todayJobs = allJobs.filter(j => j.start_date === moment().format('YYYY-MM-DD'));
+  const completedToday = allJobs.filter(j => j.status === 'completed' && j.end_date === moment().format('YYYY-MM-DD'));
+  const overtimeEntries = allTimeEntries.filter(t => t.is_overtime);
+
+  // ── Employee derived ──
+  const clockedIn = myActiveEntry[0] || null;
+  const myAssignedJobs = myJobs.filter(j => j.assigned_workers?.includes(user?.email));
+  const myTodayJobs = myAssignedJobs.filter(j => j.start_date === moment().format('YYYY-MM-DD'));
+  const myPendingTimesheets = myTimesheets.filter(t => t.status === 'pending_approval');
+  const todayHours = myTimesheets
+    .filter(t => moment(t.clock_in).isSame(moment(), 'day') && t.total_hours)
+    .reduce((sum, t) => sum + t.total_hours, 0);
+
+  const greeting = `Good ${moment().hour() < 12 ? 'morning' : moment().hour() < 17 ? 'afternoon' : 'evening'}, ${user?.full_name?.split(' ')[0] || 'there'}`;
+
+  // ══ ADMIN VIEW ══
+  if (isAdmin) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">{greeting}</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            {moment().format('dddd, D MMMM YYYY')} — Here's your workforce overview
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+          <StatCard title="Clocked In" value={activeWorkers.length} icon={Clock} color="success" subtitle="Active now" />
+          <StatCard title="Today's Jobs" value={todayJobs.length} icon={Briefcase} color="blue" subtitle="Scheduled" />
+          <StatCard title="Completed" value={completedToday.length} icon={CheckCircle2} color="success" subtitle="Today" />
+          <StatCard title="Pending Approval" value={pendingTimesheets.length} icon={FileText} color="warning" subtitle="Timesheets" />
+          <StatCard title="Overtime" value={overtimeEntries.length} icon={AlertTriangle} color="destructive" subtitle="This period" />
+          <StatCard title="Total Jobs" value={allJobs.length} icon={Briefcase} color="purple" subtitle="All time" />
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-6">
+          <div className="bg-card rounded-xl border border-border">
+            <div className="p-5 border-b border-border">
+              <div className="flex items-center justify-between">
+                <h2 className="font-semibold">Active Workers</h2>
+                <span className="text-xs bg-success/10 text-success px-2 py-1 rounded-full font-medium">
+                  {activeWorkers.length} clocked in
+                </span>
+              </div>
+            </div>
+            <div className="p-4">
+              <ActiveWorkersList timeEntries={allTimeEntries} />
+            </div>
+          </div>
+
+          <div className="bg-card rounded-xl border border-border">
+            <div className="p-5 border-b border-border">
+              <div className="flex items-center justify-between">
+                <h2 className="font-semibold">Today's Jobs</h2>
+                <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full font-medium">
+                  {todayJobs.length} scheduled
+                </span>
+              </div>
+            </div>
+            <div className="p-4">
+              <TodayJobsList jobs={todayJobs} />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ══ EMPLOYEE VIEW ══
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          Good {moment().hour() < 12 ? 'morning' : moment().hour() < 17 ? 'afternoon' : 'evening'}, {user?.full_name?.split(' ')[0] || 'there'}
-        </h1>
+        <h1 className="text-2xl font-bold tracking-tight">{greeting}</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          {moment().format('dddd, D MMMM YYYY')} — Here's your workforce overview
+          {moment().format('dddd, D MMMM YYYY')}
         </p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        <StatCard title="Clocked In" value={activeWorkers.length} icon={Clock} color="success" subtitle="Active now" />
-        <StatCard title="Today's Jobs" value={todayJobs.length} icon={Briefcase} color="blue" subtitle="Scheduled" />
-        <StatCard title="Completed" value={completedToday.length} icon={CheckCircle2} color="success" subtitle="Today" />
-        <StatCard title="Pending Approval" value={pendingTimesheets.length} icon={FileText} color="warning" subtitle="Timesheets" />
-        <StatCard title="Overtime" value={overtimeEntries.length} icon={AlertTriangle} color="destructive" subtitle="This period" />
-        <StatCard title="Total Jobs" value={jobs.length} icon={Briefcase} color="purple" subtitle="All time" />
+      {/* Clock status banner */}
+      <div className={`rounded-xl border p-5 flex items-center gap-4 ${clockedIn ? 'bg-success/5 border-success/20' : 'bg-muted/50 border-border'}`}>
+        <div className={`h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 ${clockedIn ? 'bg-success/10' : 'bg-muted'}`}>
+          {clockedIn ? <LogIn className="h-6 w-6 text-success" /> : <LogOut className="h-6 w-6 text-muted-foreground" />}
+        </div>
+        <div className="flex-1">
+          {clockedIn ? (
+            <>
+              <p className="font-semibold text-success">You're clocked in</p>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                Since {moment(clockedIn.clock_in).format('h:mm A')}
+                {clockedIn.job_title ? ` · ${clockedIn.job_title}` : ''}
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="font-semibold">Not clocked in</p>
+              <p className="text-sm text-muted-foreground mt-0.5">Head to Time Clock to start your shift</p>
+            </>
+          )}
+        </div>
+        {clockedIn && (
+          <div className="flex items-center gap-1.5">
+            <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
+            <span className="text-xs font-medium text-success">Active</span>
+          </div>
+        )}
       </div>
 
-      {/* Main Content */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Active Workers */}
-        <div className="bg-card rounded-xl border border-border">
-          <div className="p-5 border-b border-border">
-            <div className="flex items-center justify-between">
-              <h2 className="font-semibold">Active Workers</h2>
-              <span className="text-xs bg-success/10 text-success px-2 py-1 rounded-full font-medium">
-                {activeWorkers.length} clocked in
-              </span>
-            </div>
-          </div>
-          <div className="p-4">
-            <ActiveWorkersList timeEntries={timeEntries} />
+      {/* Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <StatCard title="My Jobs" value={myAssignedJobs.length} icon={Briefcase} color="blue" subtitle="Assigned" />
+        <StatCard title="Today" value={myTodayJobs.length} icon={Briefcase} color="purple" subtitle="Scheduled" />
+        <StatCard title="Hours Today" value={`${todayHours.toFixed(1)}h`} icon={Clock} color="success" subtitle="Logged" />
+        <StatCard title="Pending" value={myPendingTimesheets.length} icon={FileText} color="warning" subtitle="Timesheets" />
+      </div>
+
+      {/* My Jobs */}
+      <div className="bg-card rounded-xl border border-border">
+        <div className="p-5 border-b border-border">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold">Jobs Assigned to You</h2>
+            <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full font-medium">
+              {myAssignedJobs.length} total
+            </span>
           </div>
         </div>
-
-        {/* Today's Jobs */}
-        <div className="bg-card rounded-xl border border-border">
-          <div className="p-5 border-b border-border">
-            <div className="flex items-center justify-between">
-              <h2 className="font-semibold">Today's Jobs</h2>
-              <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full font-medium">
-                {todayJobs.length} scheduled
-              </span>
-            </div>
-          </div>
-          <div className="p-4">
-            <TodayJobsList jobs={todayJobs} />
-          </div>
+        <div className="p-4">
+          <TodayJobsList jobs={myAssignedJobs} />
         </div>
       </div>
     </div>
