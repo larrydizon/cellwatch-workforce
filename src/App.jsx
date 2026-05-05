@@ -18,6 +18,7 @@ import Notifications from '@/pages/Notifications';
 import Profile from '@/pages/Profile';
 import Settings from '@/pages/Settings';
 import Leave from '@/pages/Leave';
+import AdminOverview from '@/pages/AdminOverview';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -58,6 +59,7 @@ const AuthenticatedApp = () => {
         <Route path="/profile" element={<Profile />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/leave" element={<Leave />} />
+        <Route path="/admin-overview" element={<AdminOverview />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

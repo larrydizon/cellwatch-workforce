@@ -9,11 +9,12 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Calendar, Briefcase, Clock,
-  FileText, MessageSquare, Settings, Bell, UmbrellaOff
+  FileText, MessageSquare, Settings, Bell, UmbrellaOff, LayoutGrid
 } from 'lucide-react';
 
 const mobileNavItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
+  { label: 'Admin View', icon: LayoutGrid, path: '/admin-overview', adminOnly: true },
   { label: 'Employees', icon: Users, path: '/employees' },
   { label: 'Schedule', icon: Calendar, path: '/schedule' },
   { label: 'Jobs', icon: Briefcase, path: '/jobs' },
@@ -41,7 +42,7 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
+      <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} user={user} />
 
       {/* Mobile sidebar sheet */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -56,7 +57,7 @@ export default function AppLayout() {
             </div>
           </div>
           <nav className="py-4 px-2 space-y-1">
-            {mobileNavItems.map((item) => {
+            {mobileNavItems.filter(item => !item.adminOnly || ['admin', 'operations_manager', 'supervisor'].includes(user?.role)).map((item) => {
               const isActive = location.pathname === item.path ||
                 (item.path !== '/' && location.pathname.startsWith(item.path));
               return (

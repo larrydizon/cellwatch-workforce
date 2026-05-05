@@ -3,12 +3,13 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Calendar, Briefcase, Clock,
   FileText, MessageSquare, Settings, ChevronLeft, ChevronRight,
-  ClipboardList, Bell, UmbrellaOff
+  ClipboardList, Bell, UmbrellaOff, LayoutGrid
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
+  { label: 'Admin View', icon: LayoutGrid, path: '/admin-overview', adminOnly: true },
   { label: 'Employees', icon: Users, path: '/employees' },
   { label: 'Schedule', icon: Calendar, path: '/schedule' },
   { label: 'Jobs', icon: Briefcase, path: '/jobs' },
@@ -20,8 +21,9 @@ const navItems = [
   { label: 'Settings', icon: Settings, path: '/settings' },
 ];
 
-export default function Sidebar({ collapsed, onToggle }) {
+export default function Sidebar({ collapsed, onToggle, user }) {
   const location = useLocation();
+  const isAdmin = ['admin', 'operations_manager', 'supervisor'].includes(user?.role);
 
   return (
     <aside
@@ -50,7 +52,7 @@ export default function Sidebar({ collapsed, onToggle }) {
 
       {/* Nav */}
       <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
-        {navItems.map((item) => {
+        {navItems.filter(item => !item.adminOnly || isAdmin).map((item) => {
           const isActive = location.pathname === item.path || 
             (item.path !== '/' && location.pathname.startsWith(item.path));
           return (
