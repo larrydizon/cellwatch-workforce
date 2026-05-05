@@ -1,56 +1,59 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useOutletContext } from 'react-router-dom';
 import {
-  Clock, Briefcase, AlertTriangle, CheckCircle2, FileText, LogIn, LogOut
+  Clock, Briefcase, AlertTriangle, CheckCircle2, FileText, LogIn, LogOut, LayoutDashboard, User
 } from 'lucide-react';
 import StatCard from '@/components/dashboard/StatCard';
 import ActiveWorkersList from '@/components/dashboard/ActiveWorkersList';
 import TodayJobsList from '@/components/dashboard/TodayJobsList';
 import moment from 'moment';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 export default function Dashboard() {
   const { user } = useOutletContext();
   const isAdmin = ['admin', 'operations_manager', 'supervisor'].includes(user?.role);
+  const [viewMode, setViewMode] = useState('admin'); // 'admin' | 'employee' — only relevant for admins
+
+  const showAdminView = isAdmin && viewMode === 'admin';
 
   // ── Admin queries ──
   const { data: allTimeEntries = [] } = useQuery({
     queryKey: ['dashboard-time-entries'],
     queryFn: () => base44.entities.TimeEntry.list('-created_date', 50),
-    enabled: isAdmin,
+    enabled: showAdminView,
   });
 
   const { data: allJobs = [] } = useQuery({
     queryKey: ['dashboard-jobs'],
     queryFn: () => base44.entities.Job.list('-created_date', 50),
-    enabled: isAdmin,
+    enabled: showAdminView,
   });
 
   const { data: pendingTimesheets = [] } = useQuery({
     queryKey: ['dashboard-pending-timesheets'],
     queryFn: () => base44.entities.TimeEntry.filter({ status: 'pending_approval' }, '-created_date', 50),
-    enabled: isAdmin,
+    enabled: showAdminView,
   });
 
-  // ── Employee queries ──
+  // ── Employee queries (always fetch for admins too when in employee view) ──
   const { data: myActiveEntry = [] } = useQuery({
     queryKey: ['my-active-entry', user?.email],
     queryFn: () => base44.entities.TimeEntry.filter({ employee_email: user.email, status: 'active' }, '-created_date', 1),
-    enabled: !isAdmin && !!user?.email,
+    enabled: !!user?.email && (!isAdmin || viewMode === 'employee'),
   });
 
   const { data: myJobs = [] } = useQuery({
     queryKey: ['my-jobs', user?.email],
     queryFn: () => base44.entities.Job.list('-created_date', 50),
-    enabled: !isAdmin && !!user?.email,
+    enabled: !!user?.email && (!isAdmin || viewMode === 'employee'),
   });
 
   const { data: myTimesheets = [] } = useQuery({
     queryKey: ['my-timesheets', user?.email],
     queryFn: () => base44.entities.TimeEntry.filter({ employee_email: user.email }, '-created_date', 20),
-    enabled: !isAdmin && !!user?.email,
+    enabled: !!user?.email && (!isAdmin || viewMode === 'employee'),
   });
 
   // ── Admin derived ──
@@ -70,15 +73,40 @@ export default function Dashboard() {
 
   const greeting = `Good ${moment().hour() < 12 ? 'morning' : moment().hour() < 17 ? 'afternoon' : 'evening'}, ${user?.full_name?.split(' ')[0] || 'there'}`;
 
+  // ── View toggle (admin only) ──
+  const ViewToggle = () => (
+    <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+      <button
+        onClick={() => setViewMode('admin')}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+          viewMode === 'admin' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+        }`}
+      >
+        <LayoutDashboard className="h-3.5 w-3.5" /> Admin
+      </button>
+      <button
+        onClick={() => setViewMode('employee')}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+          viewMode === 'employee' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+        }`}
+      >
+        <User className="h-3.5 w-3.5" /> My View
+      </button>
+    </div>
+  );
+
   // ══ ADMIN VIEW ══
-  if (isAdmin) {
+  if (showAdminView) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{greeting}</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            {moment().format('dddd, D MMMM YYYY')} — Here's your workforce overview
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">{greeting}</h1>
+            <p className="text-muted-foreground text-sm mt-1">
+              {moment().format('dddd, D MMMM YYYY')} — Workforce overview
+            </p>
+          </div>
+          <ViewToggle />
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
@@ -123,14 +151,17 @@ export default function Dashboard() {
     );
   }
 
-  // ══ EMPLOYEE VIEW ══
+  // ══ EMPLOYEE VIEW (also shown to admins when they switch to "My View") ══
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{greeting}</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          {moment().format('dddd, D MMMM YYYY')}
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">{greeting}</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            {moment().format('dddd, D MMMM YYYY')}
+          </p>
+        </div>
+        {isAdmin && <ViewToggle />}
       </div>
 
       {/* Clock status banner */}
