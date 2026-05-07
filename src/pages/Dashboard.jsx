@@ -10,6 +10,7 @@ import ActiveWorkersList from '@/components/dashboard/ActiveWorkersList';
 import TodayJobsList from '@/components/dashboard/TodayJobsList';
 import moment from 'moment';
 import { Button } from '@/components/ui/button';
+import AdminCalendar from '@/components/dashboard/AdminCalendar';
 
 export default function Dashboard() {
   const { user } = useOutletContext();
@@ -34,6 +35,18 @@ export default function Dashboard() {
   const { data: pendingTimesheets = [] } = useQuery({
     queryKey: ['dashboard-pending-timesheets'],
     queryFn: () => base44.entities.TimeEntry.filter({ status: 'pending_approval' }, '-created_date', 50),
+    enabled: showAdminView,
+  });
+
+  const { data: allShifts = [] } = useQuery({
+    queryKey: ['dashboard-all-shifts'],
+    queryFn: () => base44.entities.Shift.list('-start_time', 200),
+    enabled: showAdminView,
+  });
+
+  const { data: allLeaveRequests = [] } = useQuery({
+    queryKey: ['dashboard-all-leaves'],
+    queryFn: () => base44.entities.LeaveRequest.list('-created_date', 200),
     enabled: showAdminView,
   });
 
@@ -147,6 +160,8 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+
+        <AdminCalendar shifts={allShifts} leaveRequests={allLeaveRequests} />
       </div>
     );
   }
