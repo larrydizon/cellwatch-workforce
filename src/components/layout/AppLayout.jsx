@@ -11,6 +11,7 @@ import {
   LayoutDashboard, Users, Calendar, Briefcase, Clock,
   FileText, MessageSquare, Settings, Bell, UmbrellaOff, LayoutGrid
 } from 'lucide-react';
+import useShiftReminders from '@/hooks/useShiftReminders';
 
 const mobileNavItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
@@ -35,6 +36,8 @@ export default function AppLayout() {
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
+
+  useShiftReminders(user);
 
   useEffect(() => {
     setMobileOpen(false);
