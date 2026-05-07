@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useOutletContext } from 'react-router-dom';
@@ -8,6 +8,14 @@ import { Label } from '@/components/ui/label';
 import { Clock, MapPin, Coffee, LogOut, Play } from 'lucide-react';
 import moment from 'moment';
 import { toast } from 'sonner';
+import LocationMapLink from '@/components/timeclock/LocationMapLink';
+
+const TRACKING_INTERVAL_KEY = 'location_tracking_interval_ms';
+
+function getTrackingInterval() {
+  const val = localStorage.getItem(TRACKING_INTERVAL_KEY);
+  return val ? parseInt(val, 10) : 0; // 0 = disabled
+}
 
 export default function TimeClock() {
   const { user } = useOutletContext();
@@ -15,19 +23,36 @@ export default function TimeClock() {
   const [selectedJob, setSelectedJob] = useState('');
   const [location, setLocation] = useState(null);
   const queryClient = useQueryClient();
+  const trackingRef = useRef(null);
 
+  // Live clock
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(moment()), 1000);
     return () => clearInterval(timer);
   }, []);
 
+  // Get initial location once
   useEffect(() => {
-    if (navigator.geolocation) {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => {}
+    );
+  }, []);
+
+  // Live location tracking interval (from Settings preference)
+  useEffect(() => {
+    const interval = getTrackingInterval();
+    if (!interval || !navigator.geolocation) return;
+
+    trackingRef.current = setInterval(() => {
       navigator.geolocation.getCurrentPosition(
         (pos) => setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
         () => {}
       );
-    }
+    }, interval);
+
+    return () => clearInterval(trackingRef.current);
   }, []);
 
   const { data: activeEntry } = useQuery({
@@ -137,22 +162,21 @@ export default function TimeClock() {
         <p className="text-lg text-muted-foreground font-mono mt-1">{currentTime.format(':ss')}</p>
 
         {location && (
-          <div className="flex items-center justify-center gap-1.5 mt-4 text-xs text-muted-foreground">
-            <MapPin className="h-3 w-3" />
-            <span>GPS: {location.lat.toFixed(4)}, {location.lng.toFixed(4)}</span>
+          <div className="mt-4 flex justify-center">
+            <LocationMapLink lat={location.lat} lng={location.lng} label="Current location" />
           </div>
         )}
       </div>
 
       {/* Active Session */}
       {activeEntry && (
-        <div className="bg-success/5 border border-success/20 rounded-xl p-5">
-          <div className="flex items-center gap-2 mb-2">
+        <div className="bg-success/5 border border-success/20 rounded-xl p-5 space-y-3">
+          <div className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
             <span className="text-sm font-medium text-success">Currently Clocked In</span>
           </div>
           {activeEntry.job_title && (
-            <p className="text-sm text-muted-foreground mb-1">Job: {activeEntry.job_title}</p>
+            <p className="text-sm text-muted-foreground">Job: {activeEntry.job_title}</p>
           )}
           <p className="text-2xl font-bold font-mono">
             {String(Math.floor(elapsed?.asHours() || 0)).padStart(2, '0')}:
@@ -160,7 +184,13 @@ export default function TimeClock() {
             {String(elapsed?.seconds() || 0).padStart(2, '0')}
           </p>
           {isOnBreak && (
-            <p className="text-sm text-amber-600 font-medium mt-1">On break</p>
+            <p className="text-sm text-amber-600 font-medium">On break</p>
+          )}
+          {/* Clock-in location */}
+          {activeEntry.clock_in_lat && (
+            <div className="pt-2 border-t border-success/20">
+              <LocationMapLink lat={activeEntry.clock_in_lat} lng={activeEntry.clock_in_lng} label="Clocked in at" />
+            </div>
           )}
         </div>
       )}
@@ -196,33 +226,31 @@ export default function TimeClock() {
             <Play className="h-6 w-6" /> Clock In
           </Button>
         ) : (
-          <>
-            <div className="grid grid-cols-2 gap-3">
-              <Button
-                onClick={() => breakMutation.mutate()}
-                disabled={breakMutation.isPending}
-                variant="outline"
-                className="h-14 gap-2 rounded-xl"
-              >
-                <Coffee className="h-5 w-5" />
-                {isOnBreak ? 'End Break' : 'Start Break'}
-              </Button>
-              <Button
-                onClick={() => clockOutMutation.mutate()}
-                disabled={clockOutMutation.isPending}
-                className="h-14 gap-2 rounded-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-              >
-                <LogOut className="h-5 w-5" /> Clock Out
-              </Button>
-            </div>
-          </>
+          <div className="grid grid-cols-2 gap-3">
+            <Button
+              onClick={() => breakMutation.mutate()}
+              disabled={breakMutation.isPending}
+              variant="outline"
+              className="h-14 gap-2 rounded-xl"
+            >
+              <Coffee className="h-5 w-5" />
+              {isOnBreak ? 'End Break' : 'Start Break'}
+            </Button>
+            <Button
+              onClick={() => clockOutMutation.mutate()}
+              disabled={clockOutMutation.isPending}
+              className="h-14 gap-2 rounded-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            >
+              <LogOut className="h-5 w-5" /> Clock Out
+            </Button>
+          </div>
         )}
       </div>
 
       {/* Today's Summary */}
       <div className="bg-card rounded-xl border border-border p-5">
         <h3 className="font-semibold text-sm mb-3">Today's Summary</h3>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
             <p className="text-xs text-muted-foreground">Total Hours</p>
             <p className="text-lg font-bold">{todayTotal.toFixed(1)}h</p>
@@ -233,13 +261,23 @@ export default function TimeClock() {
           </div>
         </div>
         {todayEntries.length > 0 && (
-          <div className="mt-4 space-y-2">
+          <div className="space-y-4">
             {todayEntries.map(e => (
-              <div key={e.id} className="flex items-center justify-between text-sm py-1.5 border-t border-border">
-                <span className="text-muted-foreground">
-                  {moment(e.clock_in).format('h:mm A')} – {e.clock_out ? moment(e.clock_out).format('h:mm A') : 'Active'}
-                </span>
-                <span className="font-medium">{e.total_hours ? `${e.total_hours}h` : '—'}</span>
+              <div key={e.id} className="border-t border-border pt-3 space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    {moment(e.clock_in).format('h:mm A')} – {e.clock_out ? moment(e.clock_out).format('h:mm A') : 'Active'}
+                  </span>
+                  <span className="font-medium">{e.total_hours ? `${e.total_hours}h` : '—'}</span>
+                </div>
+                {/* Clock-in map link */}
+                {e.clock_in_lat && (
+                  <LocationMapLink lat={e.clock_in_lat} lng={e.clock_in_lng} label="Clock in" />
+                )}
+                {/* Clock-out map link */}
+                {e.clock_out_lat && (
+                  <LocationMapLink lat={e.clock_out_lat} lng={e.clock_out_lng} label="Clock out" />
+                )}
               </div>
             ))}
           </div>

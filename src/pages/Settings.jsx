@@ -1,10 +1,32 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Shield, MapPin, Bell, Clock, Users } from 'lucide-react';
 
+const TRACKING_INTERVAL_KEY = 'location_tracking_interval_ms';
+
+const INTERVAL_OPTIONS = [
+  { label: 'Disabled', value: '0' },
+  { label: 'Every 5 seconds', value: '5000' },
+  { label: 'Every 15 seconds', value: '15000' },
+  { label: 'Every 30 seconds', value: '30000' },
+  { label: 'Every 1 minute', value: '60000' },
+  { label: 'Every 2 minutes', value: '120000' },
+  { label: 'Every 5 minutes', value: '300000' },
+];
+
 export default function Settings() {
+  const [trackingInterval, setTrackingInterval] = useState(
+    () => localStorage.getItem(TRACKING_INTERVAL_KEY) || '0'
+  );
+
+  const handleIntervalChange = (val) => {
+    setTrackingInterval(val);
+    localStorage.setItem(TRACKING_INTERVAL_KEY, val);
+  };
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
@@ -27,12 +49,21 @@ export default function Settings() {
             </div>
             <Switch defaultChecked />
           </div>
-          <div className="flex items-center justify-between">
+          <div className="flex items-start justify-between gap-4">
             <div>
-              <Label>Live tracking while clocked in</Label>
-              <p className="text-xs text-muted-foreground mt-0.5">Track location continuously during shifts</p>
+              <Label>Live location update interval</Label>
+              <p className="text-xs text-muted-foreground mt-0.5">How often to refresh GPS while clocked in</p>
             </div>
-            <Switch />
+            <Select value={trackingInterval} onValueChange={handleIntervalChange}>
+              <SelectTrigger className="w-44">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {INTERVAL_OPTIONS.map(opt => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
