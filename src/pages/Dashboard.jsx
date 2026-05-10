@@ -12,6 +12,7 @@ import moment from 'moment';
 import { Button } from '@/components/ui/button';
 import AdminCalendar from '@/components/dashboard/AdminCalendar';
 import LiveFieldMap from '@/components/dashboard/LiveFieldMap';
+import ForceClockOut from '@/components/dashboard/ForceClockOut';
 
 export default function Dashboard() {
   const { user } = useOutletContext();
@@ -176,6 +177,22 @@ export default function Dashboard() {
           </div>
           <div className="p-4">
             <LiveFieldMap timeEntries={allTimeEntries} />
+          </div>
+        </div>
+
+        {/* Force Clock-Out */}
+        <div className="bg-card rounded-xl border border-border">
+          <div className="p-5 border-b border-border">
+            <div className="flex items-center justify-between">
+              <h2 className="font-semibold">Force Clock-Out</h2>
+              <span className="text-xs bg-destructive/10 text-destructive px-2 py-1 rounded-full font-medium">
+                Admin only
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Manually clock out workers who have exceeded their hours</p>
+          </div>
+          <div className="p-4">
+            <ForceClockOut timeEntries={allTimeEntries} />
           </div>
         </div>
 
