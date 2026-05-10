@@ -11,6 +11,7 @@ import TodayJobsList from '@/components/dashboard/TodayJobsList';
 import moment from 'moment';
 import { Button } from '@/components/ui/button';
 import AdminCalendar from '@/components/dashboard/AdminCalendar';
+import LiveFieldMap from '@/components/dashboard/LiveFieldMap';
 
 export default function Dashboard() {
   const { user } = useOutletContext();
@@ -158,6 +159,23 @@ export default function Dashboard() {
             <div className="p-4">
               <TodayJobsList jobs={todayJobs} />
             </div>
+          </div>
+        </div>
+
+        {/* Live Field Map */}
+        <div className="bg-card rounded-xl border border-border">
+          <div className="p-5 border-b border-border">
+            <div className="flex items-center justify-between">
+              <h2 className="font-semibold">Live Field Map</h2>
+              <span className="text-xs bg-success/10 text-success px-2 py-1 rounded-full font-medium flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse inline-block" />
+                {allTimeEntries.filter(t => t.status === 'active').length} active
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Most recent clock-in location of all active technicians</p>
+          </div>
+          <div className="p-4">
+            <LiveFieldMap timeEntries={allTimeEntries} />
           </div>
         </div>
 
