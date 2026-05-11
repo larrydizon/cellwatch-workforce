@@ -2,6 +2,8 @@
 
 export const INDUSTRIES = [
   { value: 'telecom', label: '📡 Telecommunications / Fibre' },
+  { value: 'roading', label: '🛣️ Roading & Highways' },
+  { value: 'steel_fixing', label: '🔩 Steel Fixing & Reinforcing' },
   { value: 'construction', label: '🏗️ Construction & Civil' },
   { value: 'electrical', label: '⚡ Electrical & Utilities' },
   { value: 'transport', label: '🚛 Transport & Logistics' },
@@ -13,63 +15,265 @@ export const INDUSTRIES = [
   { value: 'custom', label: '✏️ Start from scratch' },
 ];
 
+let _id = 0;
 function q(label, type = 'yes_no', options = []) {
-  return { id: Date.now().toString() + Math.random(), label, type, required: true, options };
+  _id++;
+  return { id: `tpl_${_id}_${Math.random().toString(36).slice(2)}`, label, type, required: true, options };
 }
 
 export const INDUSTRY_TEMPLATES = {
+  // ─── TELECOM / FIBRE (NZ H&S Prestart) ───────────────────────────────────
   telecom: {
     formType: 'prestart',
-    description: 'Daily pre-start safety check for telecommunications and fibre technicians.',
+    description: 'Daily Pre-Start H&S Checklist — New Zealand Telecom / Fibre Worksite. Complete before commencing work each day.',
     questions: [
-      q('Are you fit for work today (no fatigue, illness or impairment)?'),
-      q('Have you reviewed the job hazard assessment for today\'s site?'),
-      q('Is your PPE (hard hat, hi-vis vest, gloves, safety boots) in good condition?'),
-      q('Have you checked your tools and equipment are safe to use?'),
-      q('Are you aware of any underground services or overhead power lines at the site?'),
-      q('Have you completed a traffic management check if working near a road?'),
-      q('Do you have a charged and working communication device?'),
-      q('Any near misses or incidents to report from your last shift?'),
-      q('I acknowledge I have read and understood today\'s safety briefing', 'signature'),
+      // Section 1 – Today's Work
+      q('Briefly describe the work to be done today', 'textarea'),
+
+      // Section 2 – Worker Fitness
+      q('Are you fit and well to work today?'),
+      q('Are you free from alcohol, drugs, or medication effects?'),
+      q('Do you have any injury or issue that may affect your work?'),
+
+      // Section 3 – Hazards Today
+      q('Tick any hazards present at today\'s site', 'checkbox', [
+        'Working at height',
+        'Electrical hazards',
+        'Traffic / vehicles',
+        'Ladders / tools',
+        'Manual lifting',
+        'Slips, trips, falls',
+        'Weather conditions',
+        'Public / customers nearby',
+        'Underground services',
+        'Overhead power lines',
+        'Other',
+      ]),
+      q('Describe controls in place for identified hazards', 'textarea'),
+
+      // Section 4 – PPE & Equipment
+      q('Do you have the correct PPE for the job? (hard hat, hi-vis, gloves, safety boots)'),
+      q('Are tools and equipment safe to use?'),
+      q('Are ladders, leads, and power tools checked?'),
+
+      // Section 5 – Emergency Check
+      q('Do you know the emergency meeting point for this site?'),
+      q('Is first aid kit available and accessible?'),
+      q('Do you know who to contact in an emergency?'),
+      q('Emergency contact name and number', 'text'),
+
+      // Section 6 – Stop Work Rule
+      q('Do you understand you must stop work if it becomes unsafe?'),
+      q('Have you raised any safety concerns before starting?'),
+      q('Detail any safety concerns (if none, write N/A)', 'textarea'),
+
+      // Sign-On
+      q('I confirm I understand today\'s work, hazards, controls, and I will stop work if unsafe', 'signature'),
     ],
   },
+
+  // ─── ROADING & HIGHWAYS ───────────────────────────────────────────────────
+  roading: {
+    formType: 'prestart',
+    description: 'Daily Pre-Start H&S Checklist — New Zealand Roading & Highways Worksite. Complete before commencing work each day.',
+    questions: [
+      // Today's Work
+      q('Describe the roading work to be completed today (e.g. pavement, drainage, kerbing)', 'textarea'),
+
+      // Worker Fitness
+      q('Are you fit and well to work today?'),
+      q('Are you free from alcohol, drugs, or medication effects?'),
+      q('Do you have any injury or fatigue issue that may affect your work?'),
+
+      // Traffic Management
+      q('Has a Traffic Management Plan (TMP) been reviewed and is in place?'),
+      q('Are all signs, cones, and barriers correctly placed per the TMP?'),
+      q('Are all workers wearing hi-vis clothing visible to passing traffic?'),
+      q('Has a traffic controller been briefed and positioned if required?'),
+
+      // Hazards
+      q('Tick any hazards present at today\'s site', 'checkbox', [
+        'Live traffic adjacent to works',
+        'Plant / heavy machinery operating',
+        'Overhead power lines',
+        'Underground services (gas, water, fibre)',
+        'Unstable ground / trenches',
+        'Dust and airborne particles',
+        'Hot bitumen / asphalt',
+        'Manual lifting / repetitive strain',
+        'Slips, trips, falls',
+        'Weather / wind / rain',
+        'Pedestrians / public nearby',
+        'Other',
+      ]),
+      q('Controls in place for identified hazards', 'textarea'),
+
+      // PPE & Equipment
+      q('Is correct PPE worn? (hi-vis, hard hat, safety boots, gloves, eye protection)'),
+      q('Has plant and equipment been pre-started and inspected?'),
+      q('Are reversing alarms and safety devices on all plant operational?'),
+
+      // Emergency Check
+      q('Do you know the emergency assembly point for this site?'),
+      q('Is first aid kit available and who is the trained first aider on site?', 'text'),
+      q('Do you know the emergency services contact and site address to give them?'),
+
+      // Stop Work Rule
+      q('Do you understand you must stop work if conditions become unsafe?'),
+      q('Any safety concerns or near misses to report before starting?', 'textarea'),
+
+      // Sign-On
+      q('I confirm I understand today\'s work, hazards, controls, and I will stop work if unsafe', 'signature'),
+    ],
+  },
+
+  // ─── STEEL FIXING & REINFORCING ───────────────────────────────────────────
+  steel_fixing: {
+    formType: 'prestart',
+    description: 'Daily Pre-Start H&S Checklist — New Zealand Steel Fixing & Reinforcing Worksite. Complete before commencing work each day.',
+    questions: [
+      // Today's Work
+      q('Describe the steel fixing work to be done today (e.g. footings, columns, slabs)', 'textarea'),
+
+      // Worker Fitness
+      q('Are you fit and well to work today?'),
+      q('Are you free from alcohol, drugs, or medication effects?'),
+      q('Do you have any injury, fatigue, or physical issue that may affect your work?'),
+
+      // Hazards
+      q('Tick any hazards present at today\'s site', 'checkbox', [
+        'Manual handling of heavy rebar / mesh',
+        'Sharp edges on cut steel',
+        'Working at height (elevated slabs, formwork)',
+        'Overhead crane / lifting operations',
+        'Protruding rebar (impalement risk)',
+        'Slips, trips over rebar or ties',
+        'Concrete pour activity nearby',
+        'Electrical hazards near rebar',
+        'Confined spaces',
+        'Heat / sun exposure',
+        'Other',
+      ]),
+      q('Controls in place for identified hazards', 'textarea'),
+
+      // PPE & Equipment
+      q('Is correct PPE worn? (hard hat, hi-vis, steel-cap boots, gloves, cut-resistant gloves)'),
+      q('Are protruding rebar ends capped or bent to prevent impalement?'),
+      q('Are bar benders, tie guns, and cutting tools inspected and safe to use?'),
+      q('Are lifting slings and lifting equipment tagged, rated, and inspected?'),
+
+      // Working at Height
+      q('If working on elevated formwork, is fall protection in place (guardrails, safety nets, harness)?'),
+      q('Is the formwork and propping inspected and certified for loading?'),
+
+      // Manual Handling
+      q('Have team lifts or mechanical aids been arranged for heavy bundles of rebar?'),
+
+      // Emergency Check
+      q('Do you know the emergency assembly point for this site?'),
+      q('Is first aid kit available and accessible?'),
+      q('Do you know who to contact in an emergency?'),
+
+      // Stop Work Rule
+      q('Do you understand you must stop work if conditions become unsafe?'),
+      q('Any safety concerns or near misses to report before starting?', 'textarea'),
+
+      // Sign-On
+      q('I confirm I understand today\'s work, hazards, controls, and I will stop work if unsafe', 'signature'),
+    ],
+  },
+
+  // ─── CONSTRUCTION & CIVIL ─────────────────────────────────────────────────
   construction: {
     formType: 'prestart',
-    description: 'Pre-start safety check for construction and civil works.',
+    description: 'Daily Pre-Start H&S Checklist — New Zealand Construction & Civil Worksite. Complete before commencing work each day.',
     questions: [
-      q('Are you free from fatigue, alcohol, or drugs that could affect your work?'),
-      q('Have you completed a site induction or been briefed on site rules?'),
-      q('Is your PPE (hard hat, hi-vis, safety boots, gloves, eye protection) worn and serviceable?'),
-      q('Have you inspected your plant or equipment before use?'),
+      // Today's Work
+      q('Describe the construction work to be completed today', 'textarea'),
+
+      // Worker Fitness
+      q('Are you fit and well to work today?'),
+      q('Are you free from alcohol, drugs, or medication effects?'),
+      q('Do you have any injury or issue that may affect your work?'),
+
+      // Site Induction
+      q('Have you completed a site induction or been briefed on today\'s site rules?'),
+      q('Have you reviewed the relevant SWMS / Job Safety Analysis for today\'s tasks?'),
+
+      // Hazards
+      q('Tick any hazards present at today\'s site', 'checkbox', [
+        'Working at height',
+        'Excavation / trenching',
+        'Plant and heavy machinery',
+        'Electrical hazards',
+        'Traffic / vehicles on site',
+        'Overhead power lines',
+        'Underground services',
+        'Structural / formwork loading',
+        'Manual lifting / repetitive strain',
+        'Slips, trips, falls',
+        'Dust / silica exposure',
+        'Noise',
+        'Weather conditions',
+        'Public / pedestrians nearby',
+        'Hazardous substances / chemicals',
+        'Other',
+      ]),
+      q('Controls in place for identified hazards', 'textarea'),
+
+      // PPE & Equipment
+      q('Is correct PPE worn? (hard hat, hi-vis, safety boots, gloves, eye protection)'),
+      q('Are tools, plant, and equipment inspected and safe to use?'),
       q('Are exclusion zones and barricades correctly set up?'),
-      q('Have you reviewed the SWMS/JSA for today\'s tasks?'),
-      q('Is the weather suitable for the planned work activity?'),
-      q('Are emergency evacuation routes and muster points known?'),
-      q('Any hazards or unsafe conditions to report?', 'textarea'),
-      q('I confirm I am fit for work and will comply with all site safety requirements', 'signature'),
+
+      // Working at Height
+      q('If working at height — is fall protection in place (scaffolding, guardrails, or harness)?'),
+
+      // Excavation
+      q('If excavating — has a ground-breaking permit been obtained and underground services located?'),
+
+      // Emergency Check
+      q('Do you know the emergency assembly point for this site?'),
+      q('Is first aid kit available and who is the trained first aider?', 'text'),
+      q('Do you know the emergency contact number and site address?'),
+
+      // Stop Work Rule
+      q('Do you understand you must stop work if it becomes unsafe?'),
+      q('Any safety concerns or near misses to report before starting?', 'textarea'),
+
+      // Sign-On
+      q('I confirm I understand today\'s work, hazards, controls, and I will stop work if unsafe', 'signature'),
     ],
   },
+
+  // ─── ELECTRICAL ───────────────────────────────────────────────────────────
   electrical: {
     formType: 'prestart',
-    description: 'Electrical and utilities pre-start safety declaration.',
+    description: 'Daily Pre-Start H&S Checklist — Electrical & Utilities. Complete before commencing work.',
     questions: [
-      q('Are you licensed and authorised to carry out today\'s electrical work?'),
-      q('Have you reviewed the job scope and identified all electrical hazards?'),
-      q('Is lockout/tagout (LOTO) procedure confirmed for isolated equipment?'),
-      q('Have you tested equipment with a voltage tester before commencing work?'),
-      q('Is your PPE (insulated gloves, arc flash gear, safety glasses) serviceable?'),
-      q('Are you working within your competency and licence conditions?'),
-      q('Have you identified all underground cables and services?'),
-      q('Is a safety observer or spotter in place for high-risk tasks?'),
-      q('Any faults, near misses, or incidents to report?', 'textarea'),
+      q('Describe the electrical work to be completed today', 'textarea'),
+      q('Are you fit and well to work today?'),
+      q('Are you free from alcohol, drugs, or medication effects?'),
+      q('Are you licensed and authorised for today\'s electrical work?'),
+      q('Has lockout/tagout (LOTO) been applied to all isolated equipment?'),
+      q('Have you tested with a voltage tester before commencing work?'),
+      q('Is PPE serviceable? (insulated gloves, arc flash gear, safety glasses)'),
+      q('Have you identified all underground cables and overhead services?'),
+      q('Is a safety observer in place for high-risk tasks?'),
+      q('Do you know the emergency assembly point and first aider on site?'),
+      q('Do you understand you must stop work if conditions become unsafe?'),
+      q('Any safety concerns or incidents to report?', 'textarea'),
       q('I declare I am fit for work and compliant with electrical safety regulations', 'signature'),
     ],
   },
+
+  // ─── TRANSPORT ────────────────────────────────────────────────────────────
   transport: {
     formType: 'prestart',
     description: 'Daily vehicle and driver pre-start check for transport and logistics.',
     questions: [
       q('Are you free from fatigue? (Have you had sufficient rest since last shift?)'),
+      q('Are you free from alcohol, drugs, or medication effects?'),
       q('Do you hold a valid licence for the vehicle you will be operating today?'),
       q('Have you completed a walkaround vehicle inspection?'),
       q('Are tyres, lights, brakes, and mirrors in good working condition?'),
@@ -81,6 +285,8 @@ export const INDUSTRY_TEMPLATES = {
       q('I confirm I am fit to drive and the vehicle is roadworthy', 'signature'),
     ],
   },
+
+  // ─── MINING ───────────────────────────────────────────────────────────────
   mining: {
     formType: 'prestart',
     description: 'Mining and resources site pre-start safety check.',
@@ -88,7 +294,7 @@ export const INDUSTRY_TEMPLATES = {
       q('Have you completed drug and alcohol testing as required?'),
       q('Are you free from fatigue and fit for your shift?'),
       q('Have you attended today\'s pre-shift toolbox talk?'),
-      q('Is your PPE (hard hat, hi-vis, boots, gloves, ear and eye protection) serviceable?'),
+      q('Is PPE serviceable? (hard hat, hi-vis, boots, gloves, ear and eye protection)'),
       q('Have you reviewed the take 5 or hazard ID for your work area?'),
       q('Is your equipment pre-start check completed and recorded?'),
       q('Are you aware of all exclusion zones and blast areas?'),
@@ -97,6 +303,8 @@ export const INDUSTRY_TEMPLATES = {
       q('I acknowledge today\'s safety requirements and will comply with site rules', 'signature'),
     ],
   },
+
+  // ─── HEALTHCARE ───────────────────────────────────────────────────────────
   healthcare: {
     formType: 'prestart',
     description: 'Healthcare and aged care worker daily pre-start and wellness check.',
@@ -112,6 +320,8 @@ export const INDUSTRY_TEMPLATES = {
       q('I confirm I am fit for duty and will comply with infection control protocols', 'signature'),
     ],
   },
+
+  // ─── HOSPITALITY ──────────────────────────────────────────────────────────
   hospitality: {
     formType: 'prestart',
     description: 'Pre-shift check for hospitality and events staff.',
@@ -127,21 +337,25 @@ export const INDUSTRY_TEMPLATES = {
       q('I confirm I am ready for my shift and will uphold service and safety standards', 'signature'),
     ],
   },
+
+  // ─── RETAIL ───────────────────────────────────────────────────────────────
   retail: {
     formType: 'prestart',
     description: 'Retail and warehouse daily pre-start safety and operations check.',
     questions: [
       q('Are you fit for work and free from injury or illness?'),
-      q('Have you been briefed on today\'s priorities and promotions?'),
+      q('Have you been briefed on today\'s priorities?'),
       q('Are aisles, walkways, and emergency exits clear of obstructions?'),
       q('Have you inspected your workstation or area for hazards?'),
       q('Is your manual handling technique correct for today\'s tasks?'),
-      q('Is PPE (steel-cap boots, hi-vis for warehouse) being worn?'),
-      q('Are forklift and equipment licences valid for anyone operating today?'),
+      q('Is PPE being worn? (steel-cap boots, hi-vis for warehouse)'),
+      q('Are forklift and equipment licences valid for operators today?'),
       q('Any stock discrepancies, incidents, or safety issues to report?', 'textarea'),
       q('I confirm I am ready for my shift and will follow all safety procedures', 'signature'),
     ],
   },
+
+  // ─── SECURITY ─────────────────────────────────────────────────────────────
   security: {
     formType: 'prestart',
     description: 'Security officer daily pre-start check and briefing declaration.',
@@ -157,6 +371,8 @@ export const INDUSTRY_TEMPLATES = {
       q('I confirm I am fit for duty and have received today\'s briefing', 'signature'),
     ],
   },
+
+  // ─── CUSTOM ───────────────────────────────────────────────────────────────
   custom: {
     formType: 'prestart',
     description: '',
