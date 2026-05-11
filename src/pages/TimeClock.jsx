@@ -9,6 +9,7 @@ import { Clock, MapPin, Coffee, LogOut, Play } from 'lucide-react';
 import moment from 'moment';
 import { toast } from 'sonner';
 import LocationMapLink from '@/components/timeclock/LocationMapLink';
+import PreStartFormModal from '@/components/forms/PreStartFormModal';
 
 const TRACKING_INTERVAL_KEY = 'location_tracking_interval_ms';
 
@@ -22,6 +23,7 @@ export default function TimeClock() {
   const [currentTime, setCurrentTime] = useState(moment());
   const [selectedJob, setSelectedJob] = useState('');
   const [location, setLocation] = useState(null);
+  const [showPreStartForms, setShowPreStartForms] = useState(false);
   const queryClient = useQueryClient();
   const trackingRef = useRef(null);
 
@@ -68,6 +70,33 @@ export default function TimeClock() {
   const { data: jobs = [] } = useQuery({
     queryKey: ['active-jobs'],
     queryFn: () => base44.entities.Job.filter({ status: 'in_progress' }, '-created_date', 50),
+  });
+
+  // Load active forms that require completion before clock-in
+  const { data: allForms = [] } = useQuery({
+    queryKey: ['clockin-required-forms'],
+    queryFn: () => base44.entities.FormTemplate.filter({ require_before_clockin: true, is_active: true }, 'title', 50),
+    enabled: !activeEntry,
+  });
+
+  // Check if user already submitted these forms today/this week
+  const { data: todaySubmissions = [] } = useQuery({
+    queryKey: ['my-form-submissions-today', user?.email],
+    queryFn: () => base44.entities.FormSubmission.filter({ employee_email: user.email }, '-submitted_at', 50),
+    enabled: !!user?.email && !activeEntry,
+  });
+
+  const requiredForms = allForms.filter(form => {
+    const submitted = todaySubmissions.filter(s => s.form_template_id === form.id);
+    if (submitted.length === 0) return true;
+    if (form.frequency === 'every_clockin') return true;
+    if (form.frequency === 'daily') {
+      return !submitted.some(s => moment(s.submitted_at || s.created_date).isSame(moment(), 'day'));
+    }
+    if (form.frequency === 'weekly') {
+      return !submitted.some(s => moment(s.submitted_at || s.created_date).isSame(moment(), 'week'));
+    }
+    return false;
   });
 
   const { data: todayEntries = [] } = useQuery({
@@ -145,6 +174,14 @@ export default function TimeClock() {
     },
   });
 
+  const handleClockInClick = () => {
+    if (requiredForms.length > 0) {
+      setShowPreStartForms(true);
+    } else {
+      clockInMutation.mutate();
+    }
+  };
+
   const isOnBreak = activeEntry?.break_start && !activeEntry?.break_end;
   const elapsed = activeEntry ? moment.duration(currentTime.diff(moment(activeEntry.clock_in))) : null;
   const todayTotal = todayEntries.reduce((sum, e) => sum + (e.total_hours || 0), 0);
@@ -218,13 +255,20 @@ export default function TimeClock() {
       {/* Action Buttons */}
       <div className="space-y-3">
         {!activeEntry ? (
-          <Button
-            onClick={() => clockInMutation.mutate()}
-            disabled={clockInMutation.isPending}
-            className="w-full h-16 text-lg font-semibold rounded-xl gap-3 bg-success hover:bg-success/90 text-success-foreground"
-          >
-            <Play className="h-6 w-6" /> Clock In
-          </Button>
+          <div className="space-y-2">
+            <Button
+              onClick={handleClockInClick}
+              disabled={clockInMutation.isPending}
+              className="w-full h-16 text-lg font-semibold rounded-xl gap-3 bg-success hover:bg-success/90 text-success-foreground"
+            >
+              <Play className="h-6 w-6" /> Clock In
+            </Button>
+            {requiredForms.length > 0 && (
+              <p className="text-center text-xs text-amber-600 font-medium">
+                ⚠ {requiredForms.length} form{requiredForms.length > 1 ? 's' : ''} required before clocking in
+              </p>
+            )}
+          </div>
         ) : (
           <div className="grid grid-cols-2 gap-3">
             <Button
@@ -283,6 +327,17 @@ export default function TimeClock() {
           </div>
         )}
       </div>
+      {showPreStartForms && requiredForms.length > 0 && (
+        <PreStartFormModal
+          forms={requiredForms}
+          user={user}
+          jobId={selectedJob || undefined}
+          jobTitle={jobs.find(j => j.id === selectedJob)?.title}
+          open={showPreStartForms}
+          onOpenChange={setShowPreStartForms}
+          onAllCompleted={() => clockInMutation.mutate()}
+        />
+      )}
     </div>
   );
 }

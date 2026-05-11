@@ -9,7 +9,7 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Calendar, Briefcase, Clock,
-  FileText, MessageSquare, Settings, Bell, UmbrellaOff, LayoutGrid
+  FileText, MessageSquare, Settings, Bell, UmbrellaOff, LayoutGrid, ClipboardList
 } from 'lucide-react';
 import useShiftReminders from '@/hooks/useShiftReminders';
 
@@ -22,6 +22,7 @@ const mobileNavItems = [
   { label: 'Time Clock', icon: Clock, path: '/time-clock' },
   { label: 'Timesheets', icon: FileText, path: '/timesheets' },
   { label: 'Leave', icon: UmbrellaOff, path: '/leave' },
+  { label: 'Forms', icon: ClipboardList, path: '/forms', adminOnly: true },
   { label: 'Chat', icon: MessageSquare, path: '/chat' },
   { label: 'Notifications', icon: Bell, path: '/notifications' },
   { label: 'Settings', icon: Settings, path: '/settings' },

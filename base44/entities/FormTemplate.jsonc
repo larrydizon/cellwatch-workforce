@@ -1,0 +1,54 @@
+{
+  "name": "FormTemplate",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Form title e.g. Health & Safety Prestart"
+    },
+    "description": {
+      "type": "string"
+    },
+    "form_type": {
+      "type": "string",
+      "enum": [
+        "prestart",
+        "health_safety",
+        "incident",
+        "hazard",
+        "induction",
+        "other"
+      ],
+      "default": "prestart"
+    },
+    "questions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "Array of question objects: {id, label, type, options, required}"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "require_before_clockin": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, employees must complete this form before clocking in"
+    },
+    "frequency": {
+      "type": "string",
+      "enum": [
+        "every_clockin",
+        "daily",
+        "weekly"
+      ],
+      "default": "daily",
+      "description": "How often the form needs to be completed"
+    }
+  },
+  "required": [
+    "title"
+  ]
+}

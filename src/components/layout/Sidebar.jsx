@@ -16,6 +16,7 @@ const navItems = [
   { label: 'Time Clock', icon: Clock, path: '/time-clock' },
   { label: 'Timesheets', icon: FileText, path: '/timesheets' },
   { label: 'Leave', icon: UmbrellaOff, path: '/leave' },
+  { label: 'Forms', icon: ClipboardList, path: '/forms', adminOnly: true },
   { label: 'Chat', icon: MessageSquare, path: '/chat' },
   { label: 'Notifications', icon: Bell, path: '/notifications' },
   { label: 'Settings', icon: Settings, path: '/settings' },

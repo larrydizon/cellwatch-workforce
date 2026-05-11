@@ -1,0 +1,40 @@
+{
+  "name": "FormSubmission",
+  "type": "object",
+  "properties": {
+    "form_template_id": {
+      "type": "string"
+    },
+    "form_title": {
+      "type": "string"
+    },
+    "employee_email": {
+      "type": "string"
+    },
+    "employee_name": {
+      "type": "string"
+    },
+    "answers": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "Array of {question_id, question_label, answer}"
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "job_id": {
+      "type": "string"
+    },
+    "job_title": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "form_template_id",
+    "employee_email",
+    "answers"
+  ]
+}
