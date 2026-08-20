@@ -7,8 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Plus, Search, Phone, Mail, UserPlus } from 'lucide-react';
+import { Plus, Search, Phone, Mail, UserPlus, ClipboardList } from 'lucide-react';
 import { toast } from 'sonner';
+import EmployeeFormsModal from '@/components/employees/EmployeeFormsModal';
 
 const roleLabels = {
   admin: 'Admin',
@@ -40,6 +41,7 @@ export default function Employees() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('technician');
+  const [viewingEmployee, setViewingEmployee] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: users = [], isLoading } = useQuery({
@@ -140,6 +142,16 @@ export default function Employees() {
                   <p className="text-xs text-muted-foreground">Team: {emp.team}</p>
                 )}
               </div>
+              {emp.email && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full mt-3 gap-1.5"
+                  onClick={() => setViewingEmployee(emp)}
+                >
+                  <ClipboardList className="h-3.5 w-3.5" /> View Forms & Training
+                </Button>
+              )}
             </div>
           ))}
         </div>
@@ -181,6 +193,14 @@ export default function Employees() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {viewingEmployee && (
+        <EmployeeFormsModal
+          employee={viewingEmployee}
+          open={!!viewingEmployee}
+          onOpenChange={(v) => { if (!v) setViewingEmployee(null); }}
+        />
+      )}
     </div>
   );
 }
