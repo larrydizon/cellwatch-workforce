@@ -36,7 +36,8 @@
         "healthcare",
         "hospitality",
         "retail",
-        "security"
+        "security",
+        "office"
       ],
       "default": ""
     },

@@ -12,6 +12,7 @@ export const INDUSTRIES = [
   { value: 'hospitality', label: '🍽️ Hospitality & Events' },
   { value: 'retail', label: '🛒 Retail & Warehousing' },
   { value: 'security', label: '🔒 Security Services' },
+  { value: 'office', label: '🏢 Office Staff' },
   { value: 'custom', label: '✏️ Start from scratch' },
 ];
 
@@ -28,6 +29,7 @@ export const POSITIONS = [
   { value: 'hospitality', label: 'Hospitality Worker' },
   { value: 'retail', label: 'Retail / Warehouse Worker' },
   { value: 'security', label: 'Security Officer' },
+  { value: 'office', label: 'Office Staff' },
 ];
 
 let _id = 0;
@@ -384,6 +386,37 @@ export const INDUSTRY_TEMPLATES = {
       q('Do you know the emergency procedures and escalation contacts for this site?'),
       q('Any incidents, suspicious activity, or concerns to report?', 'textarea'),
       q('I confirm I am fit for duty and have received today\'s briefing', 'signature'),
+    ],
+  },
+
+  // ─── OFFICE STAFF ──────────────────────────────────────────────────────────
+  office: {
+    formType: 'prestart',
+    description: 'Daily Pre-Start H&S Checklist — New Zealand Office Worksite. Complete before commencing work each day.',
+    questions: [
+      q('Describe your main tasks or activities for today', 'textarea'),
+      q('Are you fit and well to work today?'),
+      q('Are you free from alcohol, drugs, or medication effects?'),
+      q('Do you have any injury or issue that may affect your work?'),
+      q('Tick any hazards present in your work area today', 'checkbox', [
+        'Slips, trips, falls (wet floors, cables)',
+        'Manual handling / lifting boxes',
+        'Poor workstation ergonomics',
+        'Electrical hazards (leads, equipment)',
+        'Hot water / kitchen hazards',
+        'Working alone after hours',
+        'Fire hazards',
+        'Other',
+      ]),
+      q('Controls in place for identified hazards', 'textarea'),
+      q('Is your workstation set up ergonomically correct? (screen height, chair, posture)'),
+      q('Are walkways and emergency exits clear of obstructions?'),
+      q('Have you completed any required ergonomic or health & safety training?'),
+      q('Do you know the emergency evacuation procedure and assembly point?'),
+      q('Is first aid kit available and who is the trained first aider?', 'text'),
+      q('Do you understand you must stop work if conditions become unsafe?'),
+      q('Any safety concerns or incidents to report before starting?', 'textarea'),
+      q('I confirm I understand today\'s work, hazards, controls, and I will stop work if unsafe', 'signature'),
     ],
   },
 
