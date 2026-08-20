@@ -86,7 +86,10 @@ export default function TimeClock() {
     enabled: !!user?.email && !activeEntry,
   });
 
-  const requiredForms = allForms.filter(form => {
+  const isAdmin = user?.role === 'admin';
+
+  // Admins are not required to complete pre-start forms
+  const requiredForms = isAdmin ? [] : allForms.filter(form => {
     const submitted = todaySubmissions.filter(s => s.form_template_id === form.id);
     if (submitted.length === 0) return true;
     if (form.frequency === 'every_clockin') return true;
@@ -176,6 +179,11 @@ export default function TimeClock() {
 
   const handleClockInClick = () => {
     if (requiredForms.length > 0) {
+      // Employees must be onsite (location captured) to complete the pre-start check
+      if (!location) {
+        toast.error('You must be onsite to complete the pre-start check. Enable location access and try again.');
+        return;
+      }
       setShowPreStartForms(true);
     } else {
       clockInMutation.mutate();
@@ -266,6 +274,7 @@ export default function TimeClock() {
             {requiredForms.length > 0 && (
               <p className="text-center text-xs text-amber-600 font-medium">
                 ⚠ {requiredForms.length} form{requiredForms.length > 1 ? 's' : ''} required before clocking in
+                {!location && ' · must be onsite (enable location)'}
               </p>
             )}
           </div>
