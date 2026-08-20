@@ -1,0 +1,78 @@
+{
+  "name": "Organization",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Company / organization name"
+    },
+    "plan": {
+      "type": "string",
+      "enum": [
+        "free",
+        "starter",
+        "pro",
+        "enterprise"
+      ],
+      "default": "free"
+    },
+    "plan_status": {
+      "type": "string",
+      "enum": [
+        "trial",
+        "active",
+        "past_due",
+        "canceled"
+      ],
+      "default": "trial"
+    },
+    "seat_limit": {
+      "type": "number",
+      "default": 5,
+      "description": "Max employees allowed on this plan"
+    },
+    "stripe_customer_id": {
+      "type": "string"
+    },
+    "stripe_subscription_id": {
+      "type": "string"
+    },
+    "trial_ends_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "owner_email": {
+      "type": "string",
+      "description": "Email of the user who owns this organization"
+    },
+    "member_emails": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Emails of users belonging to this organization"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.owner_email": "{{user.email}}"
+        },
+        {
+          "data.member_emails": "{{user.email}}"
+        }
+      ]
+    },
+    "create": {},
+    "update": {
+      "data.owner_email": "{{user.email}}"
+    },
+    "delete": {
+      "data.owner_email": "{{user.email}}"
+    }
+  }
+}

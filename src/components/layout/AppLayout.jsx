@@ -6,10 +6,10 @@ import TopBar from './TopBar';
 import { cn } from '@/lib/utils';
 import { base44 } from '@/api/base44Client';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Calendar, Briefcase, Clock,
-  FileText, MessageSquare, Settings, Bell, UmbrellaOff, LayoutGrid, ClipboardList
+  FileText, MessageSquare, Settings, Bell, UmbrellaOff, LayoutGrid, ClipboardList, CreditCard
 } from 'lucide-react';
 import useShiftReminders from '@/hooks/useShiftReminders';
 
@@ -26,6 +26,7 @@ const mobileNavItems = [
   { label: 'My Forms', icon: ClipboardList, path: '/my-forms' },
   { label: 'Chat', icon: MessageSquare, path: '/chat' },
   { label: 'Notifications', icon: Bell, path: '/notifications' },
+  { label: 'Billing', icon: CreditCard, path: '/billing' },
   { label: 'Settings', icon: Settings, path: '/settings' },
 ];
 
@@ -34,10 +35,18 @@ export default function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [user, setUser] = useState(null);
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
+
+  // Self-serve: users without an organization are sent to onboarding
+  useEffect(() => {
+    if (user && !user.organization_id) {
+      navigate('/onboarding', { replace: true });
+    }
+  }, [user]);
 
   useShiftReminders(user);
 

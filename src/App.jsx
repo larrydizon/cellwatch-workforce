@@ -21,6 +21,8 @@ import Leave from '@/pages/Leave';
 import AdminOverview from '@/pages/AdminOverview';
 import Forms from '@/pages/Forms';
 import MyForms from '@/pages/MyForms';
+import Onboarding from '@/pages/Onboarding';
+import Billing from '@/pages/Billing';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -49,6 +51,7 @@ const AuthenticatedApp = () => {
 
   return (
     <Routes>
+      <Route path="/onboarding" element={<Onboarding />} />
       <Route element={<AppLayout />}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/employees" element={<Employees />} />
@@ -64,6 +67,7 @@ const AuthenticatedApp = () => {
         <Route path="/admin-overview" element={<AdminOverview />} />
         <Route path="/forms" element={<Forms />} />
         <Route path="/my-forms" element={<MyForms />} />
+        <Route path="/billing" element={<Billing />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

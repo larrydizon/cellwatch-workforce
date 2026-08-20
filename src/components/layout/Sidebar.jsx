@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Calendar, Briefcase, Clock,
   FileText, MessageSquare, Settings, ChevronLeft, ChevronRight,
-  ClipboardList, Bell, UmbrellaOff, LayoutGrid
+  ClipboardList, Bell, UmbrellaOff, LayoutGrid, CreditCard
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -20,6 +20,7 @@ const navItems = [
   { label: 'My Forms', icon: ClipboardList, path: '/my-forms' },
   { label: 'Chat', icon: MessageSquare, path: '/chat' },
   { label: 'Notifications', icon: Bell, path: '/notifications' },
+  { label: 'Billing', icon: CreditCard, path: '/billing' },
   { label: 'Settings', icon: Settings, path: '/settings' },
 ];
 
