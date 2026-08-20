@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import AdminCalendar from '@/components/dashboard/AdminCalendar';
 import LiveFieldMap from '@/components/dashboard/LiveFieldMap';
 import ForceClockOut from '@/components/dashboard/ForceClockOut';
+import FormsReminder from '@/components/dashboard/FormsReminder';
 
 export default function Dashboard() {
   const { user } = useOutletContext();
@@ -242,6 +243,8 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      <FormsReminder user={user} />
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

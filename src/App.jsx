@@ -20,6 +20,7 @@ import Settings from '@/pages/Settings';
 import Leave from '@/pages/Leave';
 import AdminOverview from '@/pages/AdminOverview';
 import Forms from '@/pages/Forms';
+import MyForms from '@/pages/MyForms';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -62,6 +63,7 @@ const AuthenticatedApp = () => {
         <Route path="/leave" element={<Leave />} />
         <Route path="/admin-overview" element={<AdminOverview />} />
         <Route path="/forms" element={<Forms />} />
+        <Route path="/my-forms" element={<MyForms />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

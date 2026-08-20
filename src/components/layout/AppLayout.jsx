@@ -23,6 +23,7 @@ const mobileNavItems = [
   { label: 'Timesheets', icon: FileText, path: '/timesheets' },
   { label: 'Leave', icon: UmbrellaOff, path: '/leave' },
   { label: 'Forms', icon: ClipboardList, path: '/forms', adminOnly: true },
+  { label: 'My Forms', icon: ClipboardList, path: '/my-forms' },
   { label: 'Chat', icon: MessageSquare, path: '/chat' },
   { label: 'Notifications', icon: Bell, path: '/notifications' },
   { label: 'Settings', icon: Settings, path: '/settings' },

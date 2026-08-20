@@ -4,10 +4,11 @@ import { base44 } from '@/api/base44Client';
 import { useOutletContext } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, ClipboardList, Settings, Eye, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Plus, ClipboardList, Settings, Eye, Trash2, ToggleLeft, ToggleRight, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import FormBuilderModal from '@/components/forms/FormBuilderModal';
 import FormSubmissionsModal from '@/components/forms/FormSubmissionsModal';
+import AssignFormModal from '@/components/forms/AssignFormModal';
 
 const typeLabels = {
   prestart: 'Pre-Start',
@@ -34,6 +35,7 @@ export default function Forms() {
   const [builderOpen, setBuilderOpen] = useState(false);
   const [editingForm, setEditingForm] = useState(null);
   const [viewingSubmissions, setViewingSubmissions] = useState(null);
+  const [assignOpen, setAssignOpen] = useState(false);
 
   const { data: forms = [], isLoading } = useQuery({
     queryKey: ['form-templates'],
@@ -85,9 +87,14 @@ export default function Forms() {
           <h1 className="text-2xl font-bold tracking-tight">Forms</h1>
           <p className="text-sm text-muted-foreground mt-1">Build and manage prestart, H&S and other forms</p>
         </div>
-        <Button onClick={handleNew} className="gap-2">
-          <Plus className="h-4 w-4" /> New Form
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setAssignOpen(true)} variant="outline" className="gap-2">
+            <Send className="h-4 w-4" /> Assign Form
+          </Button>
+          <Button onClick={handleNew} className="gap-2">
+            <Plus className="h-4 w-4" /> New Form
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -185,6 +192,8 @@ export default function Forms() {
         onOpenChange={(v) => { setBuilderOpen(v); if (!v) setEditingForm(null); }}
         editingForm={editingForm}
       />
+
+      <AssignFormModal open={assignOpen} onOpenChange={setAssignOpen} user={user} />
 
       {viewingSubmissions && (
         <FormSubmissionsModal
