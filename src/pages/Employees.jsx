@@ -7,9 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Plus, Search, Phone, Mail, UserPlus, ClipboardList } from 'lucide-react';
+import { Plus, Search, Phone, Mail, UserPlus, ClipboardList, LayoutDashboard } from 'lucide-react';
 import { toast } from 'sonner';
 import EmployeeFormsModal from '@/components/employees/EmployeeFormsModal';
+import EmployeeDashboardModal from '@/components/employees/EmployeeDashboardModal';
 
 const roleLabels = {
   admin: 'Admin',
@@ -42,6 +43,7 @@ export default function Employees() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('technician');
   const [viewingEmployee, setViewingEmployee] = useState(null);
+  const [viewingDashboard, setViewingDashboard] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: users = [], isLoading } = useQuery({
@@ -143,14 +145,24 @@ export default function Employees() {
                 )}
               </div>
               {emp.email && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full mt-3 gap-1.5"
-                  onClick={() => setViewingEmployee(emp)}
-                >
-                  <ClipboardList className="h-3.5 w-3.5" /> View Forms & Training
-                </Button>
+                <div className="grid grid-cols-2 gap-2 mt-3">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => setViewingDashboard(emp)}
+                  >
+                    <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => setViewingEmployee(emp)}
+                  >
+                    <ClipboardList className="h-3.5 w-3.5" /> Forms
+                  </Button>
+                </div>
               )}
             </div>
           ))}
@@ -199,6 +211,14 @@ export default function Employees() {
           employee={viewingEmployee}
           open={!!viewingEmployee}
           onOpenChange={(v) => { if (!v) setViewingEmployee(null); }}
+        />
+      )}
+
+      {viewingDashboard && (
+        <EmployeeDashboardModal
+          employee={viewingDashboard}
+          open={!!viewingDashboard}
+          onOpenChange={(v) => { if (!v) setViewingDashboard(null); }}
         />
       )}
     </div>
