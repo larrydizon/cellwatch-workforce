@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Plus, Trash2, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
-import { INDUSTRIES, INDUSTRY_TEMPLATES } from './IndustryTemplates';
+import { INDUSTRIES, INDUSTRY_TEMPLATES, POSITIONS } from './IndustryTemplates';
 
 const QUESTION_TYPES = [
   { value: 'text', label: 'Short Text' },
@@ -43,6 +43,7 @@ export default function FormBuilderModal({ open, onOpenChange, editingForm }) {
   const [description, setDescription] = useState('');
   const [formType, setFormType] = useState('prestart');
   const [frequency, setFrequency] = useState('daily');
+  const [industry, setIndustry] = useState('');
   const [questions, setQuestions] = useState([newQuestion()]);
 
   // Reset state when modal opens/closes
@@ -54,6 +55,7 @@ export default function FormBuilderModal({ open, onOpenChange, editingForm }) {
         setDescription(editingForm.description || '');
         setFormType(editingForm.form_type || 'prestart');
         setFrequency(editingForm.frequency || 'daily');
+        setIndustry(editingForm.industry || '');
         setQuestions(editingForm.questions?.length ? editingForm.questions : [newQuestion()]);
       } else {
         setStep('industry');
@@ -62,6 +64,7 @@ export default function FormBuilderModal({ open, onOpenChange, editingForm }) {
         setDescription('');
         setFormType('prestart');
         setFrequency('daily');
+        setIndustry('');
         setQuestions([newQuestion()]);
       }
     }
@@ -75,6 +78,7 @@ export default function FormBuilderModal({ open, onOpenChange, editingForm }) {
       setDescription(template.description || '');
       setQuestions(template.questions.length ? seedQuestions(template.questions) : [newQuestion()]);
     }
+    setIndustry(selectedIndustry === 'custom' ? '' : selectedIndustry);
     setStep('builder');
   };
 
@@ -91,7 +95,7 @@ export default function FormBuilderModal({ open, onOpenChange, editingForm }) {
 
   const handleSave = () => {
     if (!title.trim()) { toast.error('Please enter a form title'); return; }
-    saveMutation.mutate({ title, description, form_type: formType, frequency, questions, is_active: true });
+    saveMutation.mutate({ title, description, form_type: formType, frequency, industry, questions, is_active: true });
   };
 
   const addQuestion = () => setQuestions(q => [...q, newQuestion()]);
@@ -205,6 +209,20 @@ export default function FormBuilderModal({ open, onOpenChange, editingForm }) {
                     <SelectItem value="weekly">Once Per Week</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Target Position (optional)</Label>
+                <Select value={industry || ' '} onValueChange={(v) => setIndustry(v === ' ' ? '' : v)}>
+                  <SelectTrigger className="w-60"><SelectValue placeholder="All positions (universal)" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value=" ">All positions (universal)</SelectItem>
+                    {POSITIONS.map(p => (
+                      <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">Only workers with this position see this form. Leave universal to show it to everyone.</p>
               </div>
 
               {/* Questions */}

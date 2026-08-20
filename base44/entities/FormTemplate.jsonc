@@ -21,6 +21,25 @@
       ],
       "default": "prestart"
     },
+    "industry": {
+      "type": "string",
+      "description": "Target worker position/industry this form applies to. Empty = universal (all positions).",
+      "enum": [
+        "",
+        "telecom",
+        "roading",
+        "steel_fixing",
+        "construction",
+        "electrical",
+        "transport",
+        "mining",
+        "healthcare",
+        "hospitality",
+        "retail",
+        "security"
+      ],
+      "default": ""
+    },
     "questions": {
       "type": "array",
       "items": {

@@ -10,8 +10,10 @@ import moment from 'moment';
 import { toast } from 'sonner';
 import LocationMapLink from '@/components/timeclock/LocationMapLink';
 import PreStartFormModal from '@/components/forms/PreStartFormModal';
+import { POSITIONS } from '@/components/forms/IndustryTemplates';
 
 const TRACKING_INTERVAL_KEY = 'location_tracking_interval_ms';
+const WORKER_POSITION_KEY = 'worker_position';
 
 function getTrackingInterval() {
   const val = localStorage.getItem(TRACKING_INTERVAL_KEY);
@@ -24,6 +26,7 @@ export default function TimeClock() {
   const [selectedJob, setSelectedJob] = useState('');
   const [location, setLocation] = useState(null);
   const [showPreStartForms, setShowPreStartForms] = useState(false);
+  const [position, setPosition] = useState(() => localStorage.getItem(WORKER_POSITION_KEY) || '');
   const queryClient = useQueryClient();
   const trackingRef = useRef(null);
 
@@ -90,6 +93,10 @@ export default function TimeClock() {
 
   // Admins are not required to complete pre-start forms
   const requiredForms = isAdmin ? [] : allForms.filter(form => {
+    // Filter by worker's position: universal forms (no industry) show to everyone;
+    // industry-specific forms only show to workers with matching position
+    if (form.industry && form.industry !== position) return false;
+
     const submitted = todaySubmissions.filter(s => s.form_template_id === form.id);
     if (submitted.length === 0) return true;
     if (form.frequency === 'every_clockin') return true;
@@ -236,6 +243,34 @@ export default function TimeClock() {
             <div className="pt-2 border-t border-success/20">
               <LocationMapLink lat={activeEntry.clock_in_lat} lng={activeEntry.clock_in_lng} label="Clocked in at" />
             </div>
+          )}
+        </div>
+      )}
+
+      {/* Position Selection (when not clocked in) */}
+      {!activeEntry && (
+        <div className="space-y-2">
+          <Label>Your Position</Label>
+          <Select
+            value={position || ' '}
+            onValueChange={(v) => {
+              const val = v === ' ' ? '' : v;
+              setPosition(val);
+              localStorage.setItem(WORKER_POSITION_KEY, val);
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select your position..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value=" ">Not specified</SelectItem>
+              {POSITIONS.map(p => (
+                <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {allForms.length > 0 && !position && (
+            <p className="text-xs text-muted-foreground">Select your position to see your industry-specific pre-start form.</p>
           )}
         </div>
       )}

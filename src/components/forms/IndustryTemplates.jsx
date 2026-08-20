@@ -15,6 +15,21 @@ export const INDUSTRIES = [
   { value: 'custom', label: '✏️ Start from scratch' },
 ];
 
+// Worker position options (map 1:1 to INDUSTRY_TEMPLATES keys for form matching)
+export const POSITIONS = [
+  { value: 'telecom', label: 'Telecom / Fibre Technician' },
+  { value: 'roading', label: 'Roadworker' },
+  { value: 'steel_fixing', label: 'Steel Fixer' },
+  { value: 'construction', label: 'Construction Worker' },
+  { value: 'electrical', label: 'Electrician' },
+  { value: 'transport', label: 'Driver / Transport Operator' },
+  { value: 'mining', label: 'Mining Worker' },
+  { value: 'healthcare', label: 'Healthcare Worker' },
+  { value: 'hospitality', label: 'Hospitality Worker' },
+  { value: 'retail', label: 'Retail / Warehouse Worker' },
+  { value: 'security', label: 'Security Officer' },
+];
+
 let _id = 0;
 function q(label, type = 'yes_no', options = []) {
   _id++;
