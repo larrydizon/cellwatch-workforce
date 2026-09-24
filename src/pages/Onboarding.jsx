@@ -22,7 +22,17 @@ export default function Onboarding() {
       try {
         const orgs = await base44.entities.Organization.list('-created_date', 50);
         if (orgs.length) {
-          await base44.auth.updateMe({ organization_id: orgs[0].id });
+          const org = orgs.find(o => (o.member_emails || []).includes(u.email)) || orgs[0];
+          await base44.auth.updateMe({ organization_id: org.id });
+          // Apply the details the admin entered when they were added
+          const pending = (org.pending_invites || []).find(p => p.email?.toLowerCase() === u.email?.toLowerCase());
+          if (pending) {
+            await base44.auth.updateMe({
+              phone: pending.phone || '',
+              position: pending.position || '',
+              job_title: pending.job_title || '',
+            });
+          }
           navigate('/', { replace: true });
           return;
         }

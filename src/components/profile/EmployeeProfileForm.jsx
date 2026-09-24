@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,6 +13,7 @@ import { POSITIONS } from '@/components/forms/IndustryTemplates';
 import { CONTRACT_TYPES, USER_LEVELS, levelLabel, buildProfileForm, buildProfilePayload } from '@/lib/employeeProfile';
 import ProfileSection from './ProfileSection';
 import ProfilePhotoSection from './ProfilePhotoSection';
+import CustomFieldsSection from './CustomFieldsSection';
 
 export default function EmployeeProfileForm({ targetUser, viewer, onSaved }) {
   const queryClient = useQueryClient();
@@ -21,6 +22,15 @@ export default function EmployeeProfileForm({ targetUser, viewer, onSaved }) {
   const canEditAdminFields = viewer?.role === 'admin' && !isSelf;
   const [form, setForm] = useState(() => buildProfileForm(targetUser));
   const [saving, setSaving] = useState(false);
+
+  const { data: customFields = [] } = useQuery({
+    queryKey: ['profile-fields', viewer?.organization_id],
+    queryFn: () => base44.entities.ProfileField.filter({ organization_id: viewer.organization_id }, 'created_date', 100),
+    enabled: !!viewer?.organization_id,
+  });
+
+  const setCustomField = (key, value) =>
+    setForm(f => ({ ...f, customFields: { ...f.customFields, [key]: value } }));
 
   useEffect(() => { setForm(buildProfileForm(targetUser)); }, [targetUser]);
 
@@ -180,6 +190,13 @@ export default function EmployeeProfileForm({ targetUser, viewer, onSaved }) {
           </div>
         </div>
       </ProfileSection>
+
+      <CustomFieldsSection
+        fields={customFields}
+        values={form.customFields}
+        onChange={setCustomField}
+        canEditAdminFields={canEditAdminFields}
+      />
 
       <ProfilePhotoSection photos={form.photos} onChange={(photos) => set('photos', photos)} />
 

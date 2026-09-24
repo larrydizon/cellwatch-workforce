@@ -17,6 +17,17 @@ export const CONTRACT_TYPES = [
   { value: 'contractor', label: 'Contractor / Subcontractor' },
 ];
 
+export const FIELD_TYPES = [
+  { value: 'text', label: 'Text' },
+  { value: 'number', label: 'Number' },
+  { value: 'date', label: 'Date' },
+  { value: 'select', label: 'Dropdown' },
+];
+
+export function slugify(label) {
+  return label.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'field';
+}
+
 export function levelLabel(role) {
   return USER_LEVELS.find(l => l.value === role)?.label || role || 'User';
 }
@@ -37,6 +48,7 @@ export function buildProfileForm(user) {
     emergency_contact_phone: user?.emergency_contact_phone || '',
     emergency_contact_relationship: user?.emergency_contact_relationship || '',
     photos: user?.photos || [],
+    customFields: user?.custom_fields || {},
     role: user?.role || 'user',
   };
 }
@@ -53,6 +65,7 @@ export function buildProfilePayload(form, includeAdminFields) {
     emergency_contact_phone: form.emergency_contact_phone,
     emergency_contact_relationship: form.emergency_contact_relationship,
     photos: form.photos,
+    custom_fields: form.customFields,
   };
 
   if (includeAdminFields) {

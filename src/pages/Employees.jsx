@@ -1,19 +1,17 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Plus, Search, Phone, Mail, UserPlus, ClipboardList, LayoutDashboard, Briefcase, User as UserIcon } from 'lucide-react';
-import { toast } from 'sonner';
+import { Search, Phone, Mail, UserPlus, ClipboardList, LayoutDashboard, Briefcase, User as UserIcon, SlidersHorizontal } from 'lucide-react';
 import { useOutletContext } from 'react-router-dom';
 import EmployeeFormsModal from '@/components/employees/EmployeeFormsModal';
 import EmployeeDashboardModal from '@/components/employees/EmployeeDashboardModal';
 import AssignJobModal from '@/components/employees/AssignJobModal';
 import EmployeeProfileModal from '@/components/employees/EmployeeProfileModal';
+import InviteEmployeeModal from '@/components/employees/InviteEmployeeModal';
+import ProfileFieldsModal from '@/components/employees/ProfileFieldsModal';
 
 const roleLabels = {
   admin: 'Admin',
@@ -44,13 +42,11 @@ export default function Employees() {
   const { user } = useOutletContext();
   const [search, setSearch] = useState('');
   const [inviteOpen, setInviteOpen] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState('technician');
+  const [fieldsOpen, setFieldsOpen] = useState(false);
   const [viewingEmployee, setViewingEmployee] = useState(null);
   const [viewingDashboard, setViewingDashboard] = useState(null);
   const [assigningJobs, setAssigningJobs] = useState(null);
   const [viewingProfile, setViewingProfile] = useState(null);
-  const queryClient = useQueryClient();
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['employees'],
@@ -66,26 +62,6 @@ export default function Employees() {
     u.job_title?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleInvite = async () => {
-    if (!inviteEmail) return;
-    const appRole = ['admin', 'operations_manager'].includes(inviteRole) ? 'admin' : 'user';
-    await base44.users.inviteUser(inviteEmail, appRole);
-    // Add the invitee to this organization so they join the same workspace on accepting
-    try {
-      const org = await base44.entities.Organization.get(user.organization_id);
-      if (org && !(org.member_emails || []).includes(inviteEmail)) {
-        await base44.entities.Organization.update(org.id, {
-          member_emails: [...(org.member_emails || []), inviteEmail],
-        });
-      }
-    } catch (e) {
-      // invite is still sent; org membership can be granted later
-    }
-    toast.success(`Invitation sent to ${inviteEmail}`);
-    setInviteOpen(false);
-    setInviteEmail('');
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -93,9 +69,16 @@ export default function Employees() {
           <h1 className="text-2xl font-bold tracking-tight">Employees</h1>
           <p className="text-sm text-muted-foreground mt-1">{orgUsers.length} team members</p>
         </div>
-        <Button onClick={() => setInviteOpen(true)} className="gap-2">
-          <UserPlus className="h-4 w-4" /> Invite Employee
-        </Button>
+        <div className="flex items-center gap-2">
+          {user?.role === 'admin' && (
+            <Button variant="outline" onClick={() => setFieldsOpen(true)} className="gap-2">
+              <SlidersHorizontal className="h-4 w-4" /> Profile Fields
+            </Button>
+          )}
+          <Button onClick={() => setInviteOpen(true)} className="gap-2">
+            <UserPlus className="h-4 w-4" /> Add Employee
+          </Button>
+        </div>
       </div>
 
       {/* Search */}
@@ -209,42 +192,17 @@ export default function Employees() {
         </div>
       )}
 
-      {/* Invite Dialog */}
-      <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Invite Employee</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Email Address</Label>
-              <Input
-                placeholder="employee@email.com"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-                type="email"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Role</Label>
-              <Select value={inviteRole} onValueChange={setInviteRole}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="operations_manager">Operations Manager</SelectItem>
-                  <SelectItem value="supervisor">Supervisor</SelectItem>
-                  <SelectItem value="technician">Technician</SelectItem>
-                  <SelectItem value="casual_worker">Casual Worker</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setInviteOpen(false)}>Cancel</Button>
-            <Button onClick={handleInvite} disabled={!inviteEmail}>Send Invite</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <InviteEmployeeModal
+        open={inviteOpen}
+        onOpenChange={setInviteOpen}
+        organizationId={user?.organization_id}
+      />
+
+      <ProfileFieldsModal
+        open={fieldsOpen}
+        onOpenChange={setFieldsOpen}
+        organizationId={user?.organization_id}
+      />
 
       {viewingEmployee && (
         <EmployeeFormsModal

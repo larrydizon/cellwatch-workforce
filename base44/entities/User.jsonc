@@ -68,6 +68,10 @@
         "type": "string"
       },
       "description": "Profile and employee photo URLs"
+    },
+    "custom_fields": {
+      "type": "object",
+      "description": "Values for the organization's custom profile fields, keyed by ProfileField.key"
     }
   }
 }
