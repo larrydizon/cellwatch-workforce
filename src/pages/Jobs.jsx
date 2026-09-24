@@ -9,9 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Search, MapPin, Users, Clock, Briefcase } from 'lucide-react';
+import { Plus, Search, MapPin, Users, Clock, Briefcase, LayoutGrid, List } from 'lucide-react';
 import { toast } from 'sonner';
 import { useOutletContext } from 'react-router-dom';
+import JobKanban from '@/components/jobs/JobKanban';
 
 const statusColors = {
   new: "bg-blue-50 text-blue-700 border-blue-200",
@@ -35,6 +36,7 @@ export default function Jobs() {
   const isAdmin = ['admin', 'operations_manager', 'supervisor'].includes(user?.role);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [view, setView] = useState('list');
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState({ title: '', client_name: '', site_address: '', scope_of_work: '', priority: 'medium', status: 'new', job_type: 'other', estimated_hours: '' });
   const queryClient = useQueryClient();
@@ -60,16 +62,24 @@ export default function Jobs() {
     },
   });
 
+  const statusMutation = useMutation({
+    mutationFn: ({ id, status }) => base44.entities.Job.update(id, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      toast.success('Job status updated');
+    },
+  });
+
   // Employees only see jobs assigned to them
   const visibleJobs = isAdmin ? jobs : jobs.filter(j => j.assigned_workers?.includes(user?.email));
 
-  const filtered = visibleJobs.filter(j => {
-    const matchSearch = j.title?.toLowerCase().includes(search.toLowerCase()) ||
-      j.client_name?.toLowerCase().includes(search.toLowerCase()) ||
-      j.job_number?.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === 'all' || j.status === statusFilter;
-    return matchSearch && matchStatus;
-  });
+  const searchFiltered = visibleJobs.filter(j =>
+    j.title?.toLowerCase().includes(search.toLowerCase()) ||
+    j.client_name?.toLowerCase().includes(search.toLowerCase()) ||
+    j.job_number?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const filtered = searchFiltered.filter(j => statusFilter === 'all' || j.status === statusFilter);
 
   return (
     <div className="space-y-6">
@@ -92,17 +102,54 @@ export default function Jobs() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Search jobs..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
         </div>
-        <Tabs value={statusFilter} onValueChange={setStatusFilter}>
-          <TabsList className="h-10 overflow-x-auto">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="new">New</TabsTrigger>
-            <TabsTrigger value="in_progress">Active</TabsTrigger>
-            <TabsTrigger value="completed">Done</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        {view === 'list' && (
+          <Tabs value={statusFilter} onValueChange={setStatusFilter}>
+            <TabsList className="h-10 overflow-x-auto">
+              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="new">New</TabsTrigger>
+              <TabsTrigger value="in_progress">Active</TabsTrigger>
+              <TabsTrigger value="completed">Done</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        )}
+        <div className="flex items-center gap-1 rounded-lg border border-border p-1 sm:ml-auto">
+          <Button
+            variant={view === 'list' ? 'secondary' : 'ghost'}
+            size="sm"
+            onClick={() => setView('list')}
+            className="gap-1.5"
+          >
+            <List className="h-4 w-4" /> List
+          </Button>
+          <Button
+            variant={view === 'board' ? 'secondary' : 'ghost'}
+            size="sm"
+            onClick={() => setView('board')}
+            className="gap-1.5"
+          >
+            <LayoutGrid className="h-4 w-4" /> Board
+          </Button>
+        </div>
       </div>
 
+      {/* Jobs Board */}
+      {view === 'board' && (
+        searchFiltered.length === 0 && !isLoading ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <Briefcase className="h-12 w-12 mx-auto mb-3 opacity-30" />
+            <p className="font-medium">No jobs found</p>
+          </div>
+        ) : (
+          <JobKanban
+            jobs={searchFiltered}
+            draggable={isAdmin}
+            onStatusChange={(id, status) => statusMutation.mutate({ id, status })}
+          />
+        )
+      )}
+
       {/* Jobs List */}
+      {view === 'list' && (
       <div className="space-y-3">
         {filtered.map(job => (
           <div key={job.id} className="bg-card rounded-xl border border-border p-5 hover:shadow-md transition-shadow">
@@ -147,6 +194,7 @@ export default function Jobs() {
           </div>
         )}
       </div>
+      )}
 
       {/* Create Dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
