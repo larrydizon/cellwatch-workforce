@@ -13,6 +13,7 @@ import { Plus, Search, MapPin, Users, Clock, Briefcase, LayoutGrid, List } from 
 import { toast } from 'sonner';
 import { useOutletContext } from 'react-router-dom';
 import JobKanban from '@/components/jobs/JobKanban';
+import JobDetailModal from '@/components/jobs/JobDetailModal';
 
 const statusColors = {
   new: "bg-blue-50 text-blue-700 border-blue-200",
@@ -38,6 +39,7 @@ export default function Jobs() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [view, setView] = useState('list');
   const [createOpen, setCreateOpen] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
   const [form, setForm] = useState({ title: '', client_name: '', site_address: '', scope_of_work: '', priority: 'medium', status: 'new', job_type: 'other', estimated_hours: '' });
   const queryClient = useQueryClient();
 
@@ -143,6 +145,7 @@ export default function Jobs() {
           <JobKanban
             jobs={searchFiltered}
             draggable={isAdmin}
+            onSelect={setSelectedJob}
             onStatusChange={(id, status) => statusMutation.mutate({ id, status })}
           />
         )
@@ -152,7 +155,11 @@ export default function Jobs() {
       {view === 'list' && (
       <div className="space-y-3">
         {filtered.map(job => (
-          <div key={job.id} className="bg-card rounded-xl border border-border p-5 hover:shadow-md transition-shadow">
+          <div
+            key={job.id}
+            onClick={() => setSelectedJob(job)}
+            className="bg-card rounded-xl border border-border p-5 hover:shadow-md transition-shadow cursor-pointer"
+          >
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -195,6 +202,13 @@ export default function Jobs() {
         )}
       </div>
       )}
+
+      <JobDetailModal
+        job={selectedJob}
+        open={!!selectedJob}
+        canAssign={isAdmin}
+        onOpenChange={(v) => { if (!v) setSelectedJob(null); }}
+      />
 
       {/* Create Dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>

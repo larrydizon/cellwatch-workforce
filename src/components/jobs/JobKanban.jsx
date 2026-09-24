@@ -12,7 +12,7 @@ const COLUMNS = [
   { value: 'cancelled', label: 'Cancelled', accent: 'bg-red-500' },
 ];
 
-export default function JobKanban({ jobs, onStatusChange, draggable }) {
+export default function JobKanban({ jobs, onStatusChange, draggable, onSelect }) {
   const handleDragEnd = ({ destination, draggableId }) => {
     if (!destination) return;
     const job = jobs.find(j => j.id === draggableId);
@@ -50,7 +50,7 @@ export default function JobKanban({ jobs, onStatusChange, draggable }) {
                             {...dragProvided.dragHandleProps}
                             className={dragSnapshot.isDragging ? 'rotate-1' : ''}
                           >
-                            <JobKanbanCard job={job} />
+                            <JobKanbanCard job={job} onClick={() => onSelect?.(job)} />
                           </div>
                         )}
                       </Draggable>

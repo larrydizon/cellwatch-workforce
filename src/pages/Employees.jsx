@@ -7,11 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Plus, Search, Phone, Mail, UserPlus, ClipboardList, LayoutDashboard } from 'lucide-react';
+import { Plus, Search, Phone, Mail, UserPlus, ClipboardList, LayoutDashboard, Briefcase } from 'lucide-react';
 import { toast } from 'sonner';
 import { useOutletContext } from 'react-router-dom';
 import EmployeeFormsModal from '@/components/employees/EmployeeFormsModal';
 import EmployeeDashboardModal from '@/components/employees/EmployeeDashboardModal';
+import AssignJobModal from '@/components/employees/AssignJobModal';
 
 const roleLabels = {
   admin: 'Admin',
@@ -46,6 +47,7 @@ export default function Employees() {
   const [inviteRole, setInviteRole] = useState('technician');
   const [viewingEmployee, setViewingEmployee] = useState(null);
   const [viewingDashboard, setViewingDashboard] = useState(null);
+  const [assigningJobs, setAssigningJobs] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: users = [], isLoading } = useQuery({
@@ -178,6 +180,14 @@ export default function Employees() {
                   >
                     <ClipboardList className="h-3.5 w-3.5" /> Forms
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="col-span-2 gap-1.5"
+                    onClick={() => setAssigningJobs(emp)}
+                  >
+                    <Briefcase className="h-3.5 w-3.5" /> Assign Job
+                  </Button>
                 </div>
               )}
             </div>
@@ -235,6 +245,14 @@ export default function Employees() {
           employee={viewingDashboard}
           open={!!viewingDashboard}
           onOpenChange={(v) => { if (!v) setViewingDashboard(null); }}
+        />
+      )}
+
+      {assigningJobs && (
+        <AssignJobModal
+          employee={assigningJobs}
+          open={!!assigningJobs}
+          onOpenChange={(v) => { if (!v) setAssigningJobs(null); }}
         />
       )}
     </div>

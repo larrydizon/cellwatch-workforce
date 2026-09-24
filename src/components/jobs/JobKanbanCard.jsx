@@ -9,9 +9,9 @@ const priorityColors = {
   urgent: "bg-red-50 text-red-600",
 };
 
-export default function JobKanbanCard({ job }) {
+export default function JobKanbanCard({ job, onClick }) {
   return (
-    <div className="bg-card rounded-lg border border-border p-3 shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing">
+    <div onClick={onClick} className="bg-card rounded-lg border border-border p-3 shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing">
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs font-mono text-muted-foreground">{job.job_number}</span>
         <Badge variant="outline" className={priorityColors[job.priority]}>{job.priority}</Badge>
