@@ -6,6 +6,7 @@ import { Clock, Briefcase, FileText, LogIn, LogOut } from 'lucide-react';
 import StatCard from '@/components/dashboard/StatCard';
 import TodayJobsList from '@/components/dashboard/TodayJobsList';
 import FormsReminder from '@/components/dashboard/FormsReminder';
+import EmployeeLogsHistory from '@/components/employees/EmployeeLogsHistory';
 import moment from 'moment';
 
 export default function EmployeeDashboardModal({ employee, open, onOpenChange }) {
@@ -86,6 +87,15 @@ export default function EmployeeDashboardModal({ employee, open, onOpenChange })
             <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full font-medium">{assignedJobs.length} total</span>
           </div>
           <TodayJobsList jobs={assignedJobs} />
+        </div>
+
+        {/* Logs & locations history */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-sm">Logs & Locations</h3>
+            <span className="text-xs bg-muted px-2 py-1 rounded-full font-medium">{timeEntries.length} entries</span>
+          </div>
+          <EmployeeLogsHistory timeEntries={timeEntries} />
         </div>
       </DialogContent>
     </Dialog>
