@@ -11,10 +11,8 @@ import { toast } from 'sonner';
 import LocationMapLink from '@/components/timeclock/LocationMapLink';
 import PreStartFormModal from '@/components/forms/PreStartFormModal';
 import AdminClockPanel from '@/components/timeclock/AdminClockPanel';
-import { POSITIONS } from '@/components/forms/IndustryTemplates';
 
 const TRACKING_INTERVAL_KEY = 'location_tracking_interval_ms';
-const WORKER_POSITION_KEY = 'worker_position';
 
 function getTrackingInterval() {
   const val = localStorage.getItem(TRACKING_INTERVAL_KEY);
@@ -27,7 +25,6 @@ export default function TimeClock() {
   const [selectedJob, setSelectedJob] = useState('');
   const [location, setLocation] = useState(null);
   const [showPreStartForms, setShowPreStartForms] = useState(false);
-  const [position, setPosition] = useState(() => localStorage.getItem(WORKER_POSITION_KEY) || '');
   const queryClient = useQueryClient();
   const trackingRef = useRef(null);
 
@@ -90,13 +87,6 @@ export default function TimeClock() {
     enabled: !!user?.email && !activeEntry,
   });
 
-  // Check if user already submitted these forms today/this week
-  const { data: todaySubmissions = [] } = useQuery({
-    queryKey: ['my-form-submissions-today', user?.email],
-    queryFn: () => base44.entities.FormSubmission.filter({ employee_email: user.email }, '-submitted_at', 50),
-    enabled: !!user?.email && !activeEntry,
-  });
-
   const isAdmin = user?.role === 'admin';
 
   // Only jobs assigned to the signed-in employee can be selected for clock-in
@@ -105,47 +95,14 @@ export default function TimeClock() {
     (j.assigned_workers || []).includes(user?.email)
   );
 
-  const activeJob = jobs.find(j => j.id === selectedJob);
-  const selectedJobType = activeJob?.job_type || '';
-
   const prestartForms = allForms.filter(f => f.require_before_clockin);
 
-  // Forms assigned directly to this employee and marked required before clock-in are
-  // mandatory for clock-in, regardless of position or job category
-  const assignedRequiredForms = myAssignments
+  // Only forms assigned directly to this employee block clock-in. Induction and
+  // training forms are tasks to complete, not clock-in gates.
+  const requiredForms = myAssignments
     .filter(a => a.status === 'pending')
     .map(a => prestartForms.find(f => f.id === a.form_template_id))
-    .filter(Boolean);
-
-  // Admins are not required to complete pre-start forms
-  const generalRequiredForms = isAdmin ? [] : prestartForms.filter(form => {
-    // Filter by worker's position: universal forms (no industry) show to everyone;
-    // industry-specific forms only show to workers with matching position
-    if (form.industry && form.industry !== position) return false;
-
-    // Job-category gating: forms tagged to specific job categories are only required
-    // when the employee has selected a job of one of those categories
-    if (form.job_types?.length) {
-      if (!activeJob || !form.job_types.includes(selectedJobType)) return false;
-    }
-
-    const submitted = todaySubmissions.filter(s => s.form_template_id === form.id);
-    if (submitted.length === 0) return true;
-    if (form.frequency === 'every_clockin') return true;
-    if (form.frequency === 'daily') {
-      return !submitted.some(s => moment(s.submitted_at || s.created_date).isSame(moment(), 'day'));
-    }
-    if (form.frequency === 'weekly') {
-      return !submitted.some(s => moment(s.submitted_at || s.created_date).isSame(moment(), 'week'));
-    }
-    return false;
-  });
-
-  // Forms assigned directly to an employee are mandatory for everyone, including admins
-  const requiredForms = [
-    ...generalRequiredForms,
-    ...assignedRequiredForms.filter(f => !generalRequiredForms.some(g => g.id === f.id)),
-  ];
+    .filter(f => f && f.form_type !== 'induction');
 
   const { data: todayEntries = [] } = useQuery({
     queryKey: ['today-entries', user?.email],
@@ -295,34 +252,6 @@ export default function TimeClock() {
         </div>
       )}
 
-      {/* Position Selection (when not clocked in) */}
-      {!activeEntry && (
-        <div className="space-y-2">
-          <Label>Your Position</Label>
-          <Select
-            value={position || ' '}
-            onValueChange={(v) => {
-              const val = v === ' ' ? '' : v;
-              setPosition(val);
-              localStorage.setItem(WORKER_POSITION_KEY, val);
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select your position..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value=" ">Not specified</SelectItem>
-              {POSITIONS.map(p => (
-                <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {prestartForms.length > 0 && !position && (
-            <p className="text-xs text-muted-foreground">Select your position to see your industry-specific pre-start form.</p>
-          )}
-        </div>
-      )}
-
       {/* Job Selection (when not clocked in) */}
       {!activeEntry && (
         <div className="space-y-2">
@@ -342,11 +271,6 @@ export default function TimeClock() {
           </Select>
           {jobs.length === 0 && (
             <p className="text-xs text-muted-foreground">No jobs are currently assigned to you.</p>
-          )}
-          {prestartForms.some(f => f.job_types?.length) && !activeJob && (
-            <p className="text-xs text-muted-foreground">
-              Select the job you're working on to see any job-specific pre-start forms.
-            </p>
           )}
         </div>
       )}
