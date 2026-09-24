@@ -72,7 +72,7 @@ export function buildProfileForm(user) {
   };
 }
 
-export function buildProfilePayload(form, includeAdminFields) {
+export function buildProfilePayload(form, { userLevel = false, pay = false } = {}) {
   const payload = {
     phone: form.phone,
     address: form.address,
@@ -87,8 +87,11 @@ export function buildProfilePayload(form, includeAdminFields) {
     custom_fields: form.customFields,
   };
 
-  if (includeAdminFields) {
+  if (userLevel) {
     payload.user_level = form.user_level;
+  }
+
+  if (pay) {
     payload.ird_number = form.ird_number;
     payload.contract_type = form.contract_type || undefined;
     payload.hourly_rate = form.hourly_rate === '' ? undefined : Number(form.hourly_rate);

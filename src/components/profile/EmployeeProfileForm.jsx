@@ -18,8 +18,10 @@ import CustomFieldsSection from './CustomFieldsSection';
 export default function EmployeeProfileForm({ targetUser, viewer, onSaved }) {
   const queryClient = useQueryClient();
   const isSelf = viewer?.id === targetUser?.id;
-  // User level and pay details are admin-only, and never editable on your own record
-  const canEditAdminFields = viewer?.role === 'admin' && !isSelf;
+  // Pay details are managed by administrators (including their own record);
+  // the user level is never editable on your own record
+  const canEditPayFields = viewer?.role === 'admin';
+  const canEditAdminFields = canEditPayFields && !isSelf;
   const [form, setForm] = useState(() => buildProfileForm(targetUser));
   const [saving, setSaving] = useState(false);
 
@@ -45,7 +47,7 @@ export default function EmployeeProfileForm({ targetUser, viewer, onSaved }) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const payload = buildProfilePayload(form, canEditAdminFields);
+      const payload = buildProfilePayload(form, { userLevel: canEditAdminFields, pay: canEditPayFields });
       const level = levels.find(l => l.value === form.user_level);
       if (isSelf) {
         await base44.auth.updateMe(payload);
@@ -147,7 +149,7 @@ export default function EmployeeProfileForm({ targetUser, viewer, onSaved }) {
           </div>
           <div className="space-y-2">
             <Label>Contract Type</Label>
-            <Select value={form.contract_type || ' '} onValueChange={(v) => set('contract_type', v === ' ' ? '' : v)} disabled={!canEditAdminFields}>
+            <Select value={form.contract_type || ' '} onValueChange={(v) => set('contract_type', v === ' ' ? '' : v)} disabled={!canEditPayFields}>
               <SelectTrigger><SelectValue placeholder="Select contract..." /></SelectTrigger>
               <SelectContent>
                 <SelectItem value=" ">Not specified</SelectItem>
@@ -157,18 +159,18 @@ export default function EmployeeProfileForm({ targetUser, viewer, onSaved }) {
           </div>
           <div className="space-y-2">
             <Label>IRD Number</Label>
-            <Input value={form.ird_number} onChange={e => set('ird_number', e.target.value)} placeholder="000-000-000" disabled={!canEditAdminFields} />
+            <Input value={form.ird_number} onChange={e => set('ird_number', e.target.value)} placeholder="000-000-000" disabled={!canEditPayFields} />
           </div>
           <div className="space-y-2">
             <Label>Hourly Rate</Label>
-            <Input type="number" step="0.01" value={form.hourly_rate} onChange={e => set('hourly_rate', e.target.value)} placeholder="0.00" disabled={!canEditAdminFields} />
+            <Input type="number" step="0.01" value={form.hourly_rate} onChange={e => set('hourly_rate', e.target.value)} placeholder="0.00" disabled={!canEditPayFields} />
           </div>
           <div className="space-y-2">
             <Label>Overtime Multiplier</Label>
-            <Input type="number" step="0.1" value={form.overtime_multiplier} onChange={e => set('overtime_multiplier', e.target.value)} placeholder="1.5" disabled={!canEditAdminFields} />
+            <Input type="number" step="0.1" value={form.overtime_multiplier} onChange={e => set('overtime_multiplier', e.target.value)} placeholder="1.5" disabled={!canEditPayFields} />
           </div>
         </div>
-        {!canEditAdminFields && (
+        {!canEditPayFields && (
           <p className="flex items-center gap-1.5 text-xs text-muted-foreground mt-4">
             <Lock className="h-3 w-3" /> Contract type, IRD number and pay rates are managed by an administrator.
           </p>
