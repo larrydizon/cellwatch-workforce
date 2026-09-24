@@ -63,6 +63,18 @@ export default function Employees() {
     u.job_title?.toLowerCase().includes(search.toLowerCase())
   );
 
+  if (user && user.role !== 'admin') {
+    return (
+      <div className="max-w-md mx-auto text-center py-20 space-y-2">
+        <ShieldCheck className="h-8 w-8 mx-auto text-muted-foreground" />
+        <p className="font-semibold">Access restricted</p>
+        <p className="text-sm text-muted-foreground">
+          Only administrators and the company owner can view the employee directory.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

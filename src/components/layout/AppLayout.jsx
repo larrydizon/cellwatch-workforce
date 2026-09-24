@@ -9,14 +9,15 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Calendar, Briefcase, Clock,
-  FileText, MessageSquare, Settings, Bell, UmbrellaOff, LayoutGrid, ClipboardList, CreditCard
+  FileText, MessageSquare, Settings, Bell, UmbrellaOff, LayoutGrid, ClipboardList, CreditCard, User as UserIcon
 } from 'lucide-react';
 import useShiftReminders from '@/hooks/useShiftReminders';
 
 const mobileNavItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
   { label: 'Admin View', icon: LayoutGrid, path: '/admin-overview', adminOnly: true },
-  { label: 'Employees', icon: Users, path: '/employees' },
+  { label: 'Employees', icon: Users, path: '/employees', ownerOnly: true },
+  { label: 'My Profile', icon: UserIcon, path: '/profile' },
   { label: 'Schedule', icon: Calendar, path: '/schedule' },
   { label: 'Jobs', icon: Briefcase, path: '/jobs' },
   { label: 'Time Clock', icon: Clock, path: '/time-clock' },
@@ -71,7 +72,10 @@ export default function AppLayout() {
             </div>
           </div>
           <nav className="py-4 px-2 space-y-1">
-            {mobileNavItems.filter(item => !item.adminOnly || ['admin', 'operations_manager', 'supervisor'].includes(user?.role)).map((item) => {
+            {mobileNavItems.filter(item =>
+              (!item.adminOnly || ['admin', 'operations_manager', 'supervisor'].includes(user?.role)) &&
+              (!item.ownerOnly || user?.role === 'admin')
+            ).map((item) => {
               const isActive = location.pathname === item.path ||
                 (item.path !== '/' && location.pathname.startsWith(item.path));
               return (
