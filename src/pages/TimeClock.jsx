@@ -5,7 +5,7 @@ import { useOutletContext } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Clock, MapPin, Coffee, LogOut, Play } from 'lucide-react';
+import { Clock, MapPin, Coffee, LogOut, Play, AlertTriangle } from 'lucide-react';
 import moment from 'moment';
 import { toast } from 'sonner';
 import LocationMapLink from '@/components/timeclock/LocationMapLink';
@@ -235,6 +235,15 @@ export default function TimeClock() {
     }
   };
 
+  // Finish clock-in once every required form has been submitted
+  const completePreStartCheck = () => {
+    if (!location) {
+      toast.error('You must be onsite to complete the pre-start check. Enable location access and try again.');
+      return;
+    }
+    clockInMutation.mutate();
+  };
+
   const isOnBreak = activeEntry?.break_start && !activeEntry?.break_end;
   const elapsed = activeEntry ? moment.duration(currentTime.diff(moment(activeEntry.clock_in))) : null;
   const todayTotal = todayEntries.reduce((sum, e) => sum + (e.total_hours || 0), 0);
@@ -353,9 +362,18 @@ export default function TimeClock() {
               <Play className="h-6 w-6" /> Clock In
             </Button>
             {requiredForms.length > 0 && (
-              <p className="text-center text-xs text-amber-600 font-medium">
-                ⚠ {requiredForms.length} form{requiredForms.length > 1 ? 's' : ''} required before clocking in
-                {!location && ' · must be onsite (enable location)'}
+              <button
+                type="button"
+                onClick={() => setShowPreStartForms(true)}
+                className="w-full flex items-center justify-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs font-medium text-amber-700 hover:bg-amber-100 transition-colors"
+              >
+                <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                {requiredForms.length} form{requiredForms.length > 1 ? 's' : ''} need completing before clock-in — tap to open
+              </button>
+            )}
+            {requiredForms.length > 0 && !location && (
+              <p className="text-center text-xs text-muted-foreground">
+                You must be onsite with location enabled to clock in.
               </p>
             )}
           </div>
@@ -426,7 +444,7 @@ export default function TimeClock() {
           jobTitle={jobs.find(j => j.id === selectedJob)?.title}
           open={showPreStartForms}
           onOpenChange={setShowPreStartForms}
-          onAllCompleted={() => clockInMutation.mutate()}
+          onAllCompleted={completePreStartCheck}
         />
       )}
     </div>
