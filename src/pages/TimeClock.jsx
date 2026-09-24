@@ -70,9 +70,9 @@ export default function TimeClock() {
     enabled: !!user?.email,
   });
 
-  const { data: jobs = [] } = useQuery({
-    queryKey: ['active-jobs'],
-    queryFn: () => base44.entities.Job.filter({ status: 'in_progress' }, '-created_date', 50),
+  const { data: allJobs = [] } = useQuery({
+    queryKey: ['timeclock-jobs'],
+    queryFn: () => base44.entities.Job.list('-created_date', 100),
   });
 
   // Load active forms (used to resolve both general pre-start forms and assigned forms)
@@ -97,6 +97,13 @@ export default function TimeClock() {
   });
 
   const isAdmin = user?.role === 'admin';
+
+  // Only jobs assigned to the signed-in employee can be selected for clock-in
+  const jobs = allJobs.filter(j =>
+    !['completed', 'cancelled', 'invoiced'].includes(j.status) &&
+    (j.assigned_workers || []).includes(user?.email)
+  );
+
   const activeJob = jobs.find(j => j.id === selectedJob);
   const selectedJobType = activeJob?.job_type || '';
 
@@ -133,7 +140,8 @@ export default function TimeClock() {
     return false;
   });
 
-  const requiredForms = isAdmin ? [] : [
+  // Forms assigned directly to an employee are mandatory for everyone, including admins
+  const requiredForms = [
     ...generalRequiredForms,
     ...assignedRequiredForms.filter(f => !generalRequiredForms.some(g => g.id === f.id)),
   ];
@@ -322,6 +330,9 @@ export default function TimeClock() {
               ))}
             </SelectContent>
           </Select>
+          {jobs.length === 0 && (
+            <p className="text-xs text-muted-foreground">No jobs are currently assigned to you.</p>
+          )}
           {prestartForms.some(f => f.job_types?.length) && !activeJob && (
             <p className="text-xs text-muted-foreground">
               Select the job you're working on to see any job-specific pre-start forms.
