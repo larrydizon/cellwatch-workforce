@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Plus, Trash2, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { INDUSTRIES, INDUSTRY_TEMPLATES, POSITIONS } from './IndustryTemplates';
+import { JOB_TYPES } from '@/lib/jobTypes';
 
 const QUESTION_TYPES = [
   { value: 'text', label: 'Short Text' },
@@ -44,6 +45,7 @@ export default function FormBuilderModal({ open, onOpenChange, editingForm }) {
   const [formType, setFormType] = useState('prestart');
   const [frequency, setFrequency] = useState('daily');
   const [industry, setIndustry] = useState('');
+  const [jobTypes, setJobTypes] = useState([]);
   const [questions, setQuestions] = useState([newQuestion()]);
 
   // Reset state when modal opens/closes
@@ -56,6 +58,7 @@ export default function FormBuilderModal({ open, onOpenChange, editingForm }) {
         setFormType(editingForm.form_type || 'prestart');
         setFrequency(editingForm.frequency || 'daily');
         setIndustry(editingForm.industry || '');
+        setJobTypes(editingForm.job_types || []);
         setQuestions(editingForm.questions?.length ? editingForm.questions : [newQuestion()]);
       } else {
         setStep('industry');
@@ -65,6 +68,7 @@ export default function FormBuilderModal({ open, onOpenChange, editingForm }) {
         setFormType('prestart');
         setFrequency('daily');
         setIndustry('');
+        setJobTypes([]);
         setQuestions([newQuestion()]);
       }
     }
@@ -97,7 +101,7 @@ export default function FormBuilderModal({ open, onOpenChange, editingForm }) {
 
   const handleSave = () => {
     if (!title.trim()) { toast.error('Please enter a form title'); return; }
-    saveMutation.mutate({ title, description, form_type: formType, frequency, industry, questions, is_active: true });
+    saveMutation.mutate({ title, description, form_type: formType, frequency, industry, job_types: jobTypes, questions, is_active: true });
   };
 
   const addQuestion = () => setQuestions(q => [...q, newQuestion()]);
@@ -225,6 +229,34 @@ export default function FormBuilderModal({ open, onOpenChange, editingForm }) {
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">Only workers with this position see this form. Leave universal to show it to everyone.</p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Required For Job Categories (optional)</Label>
+                <div className="flex flex-wrap gap-2">
+                  {JOB_TYPES.map(jt => {
+                    const selected = jobTypes.includes(jt.value);
+                    return (
+                      <button
+                        key={jt.value}
+                        type="button"
+                        onClick={() => setJobTypes(prev =>
+                          selected ? prev.filter(v => v !== jt.value) : [...prev, jt.value]
+                        )}
+                        className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${
+                          selected
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : 'border-border text-muted-foreground hover:border-primary/40'
+                        }`}
+                      >
+                        {jt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Only required before clock-in when the employee has selected a job of one of these categories. Leave empty to require it for any job.
+                </p>
               </div>
 
               {/* Questions */}

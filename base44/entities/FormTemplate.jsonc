@@ -45,6 +45,13 @@
       ],
       "default": ""
     },
+    "job_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Job categories (Job.job_type) that trigger this form before clock-in. Empty = required for any job."
+    },
     "questions": {
       "type": "array",
       "items": {

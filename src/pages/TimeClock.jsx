@@ -90,12 +90,20 @@ export default function TimeClock() {
   });
 
   const isAdmin = user?.role === 'admin';
+  const activeJob = jobs.find(j => j.id === selectedJob);
+  const selectedJobType = activeJob?.job_type || '';
 
   // Admins are not required to complete pre-start forms
   const requiredForms = isAdmin ? [] : allForms.filter(form => {
     // Filter by worker's position: universal forms (no industry) show to everyone;
     // industry-specific forms only show to workers with matching position
     if (form.industry && form.industry !== position) return false;
+
+    // Job-category gating: forms tagged to specific job categories are only required
+    // when the employee has selected a job of one of those categories
+    if (form.job_types?.length) {
+      if (!activeJob || !form.job_types.includes(selectedJobType)) return false;
+    }
 
     const submitted = todaySubmissions.filter(s => s.form_template_id === form.id);
     if (submitted.length === 0) return true;
@@ -293,6 +301,11 @@ export default function TimeClock() {
               ))}
             </SelectContent>
           </Select>
+          {allForms.some(f => f.job_types?.length) && !activeJob && (
+            <p className="text-xs text-muted-foreground">
+              Select the job you're working on to see any job-specific pre-start forms.
+            </p>
+          )}
         </div>
       )}
 
