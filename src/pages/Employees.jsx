@@ -7,12 +7,13 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Plus, Search, Phone, Mail, UserPlus, ClipboardList, LayoutDashboard, Briefcase } from 'lucide-react';
+import { Plus, Search, Phone, Mail, UserPlus, ClipboardList, LayoutDashboard, Briefcase, User as UserIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { useOutletContext } from 'react-router-dom';
 import EmployeeFormsModal from '@/components/employees/EmployeeFormsModal';
 import EmployeeDashboardModal from '@/components/employees/EmployeeDashboardModal';
 import AssignJobModal from '@/components/employees/AssignJobModal';
+import EmployeeProfileModal from '@/components/employees/EmployeeProfileModal';
 
 const roleLabels = {
   admin: 'Admin',
@@ -48,6 +49,7 @@ export default function Employees() {
   const [viewingEmployee, setViewingEmployee] = useState(null);
   const [viewingDashboard, setViewingDashboard] = useState(null);
   const [assigningJobs, setAssigningJobs] = useState(null);
+  const [viewingProfile, setViewingProfile] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: users = [], isLoading } = useQuery({
@@ -127,10 +129,14 @@ export default function Employees() {
           {filtered.map((emp) => (
             <div key={emp.id} className="bg-card rounded-xl border border-border p-5 hover:shadow-md transition-shadow">
               <div className="flex items-start gap-3">
-                <div className="h-11 w-11 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <span className="text-primary font-semibold text-sm">
-                    {emp.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || '?'}
-                  </span>
+                <div className="h-11 w-11 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  {emp.photos?.[0] ? (
+                    <img src={emp.photos[0]} alt={emp.full_name} className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-primary font-semibold text-sm">
+                      {emp.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || '?'}
+                    </span>
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-sm truncate">{emp.full_name || 'Unknown'}</p>
@@ -171,6 +177,14 @@ export default function Employees() {
                     onClick={() => setViewingDashboard(emp)}
                   >
                     <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => setViewingProfile(emp)}
+                  >
+                    <UserIcon className="h-3.5 w-3.5" /> Profile
                   </Button>
                   <Button
                     variant="outline"
@@ -253,6 +267,15 @@ export default function Employees() {
           employee={assigningJobs}
           open={!!assigningJobs}
           onOpenChange={(v) => { if (!v) setAssigningJobs(null); }}
+        />
+      )}
+
+      {viewingProfile && (
+        <EmployeeProfileModal
+          employee={viewingProfile}
+          viewer={user}
+          open={!!viewingProfile}
+          onOpenChange={(v) => { if (!v) setViewingProfile(null); }}
         />
       )}
     </div>

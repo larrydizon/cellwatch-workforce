@@ -1,10 +1,73 @@
 {
+  "name": "User",
   "type": "object",
   "properties": {
     "organization_id": {
       "type": "string",
       "description": "The organization this user belongs to"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Contact phone number"
+    },
+    "address": {
+      "type": "string",
+      "description": "Home / postal address"
+    },
+    "job_title": {
+      "type": "string",
+      "description": "Job title within the company"
+    },
+    "team": {
+      "type": "string",
+      "description": "Crew / team the employee belongs to"
+    },
+    "position": {
+      "type": "string",
+      "description": "Worker position / trade (matches pre-start form industry)"
+    },
+    "skills": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of skills / tickets the employee holds"
+    },
+    "ird_number": {
+      "type": "string",
+      "description": "IRD / tax number (admin managed)"
+    },
+    "contract_type": {
+      "type": "string",
+      "description": "Employment contract type (admin managed)"
+    },
+    "hourly_rate": {
+      "type": "number",
+      "description": "Base hourly pay rate (admin managed)"
+    },
+    "overtime_multiplier": {
+      "type": "number",
+      "description": "Overtime multiplier (admin managed)"
+    },
+    "employment_type": {
+      "type": "string",
+      "description": "Legacy employment type label"
+    },
+    "emergency_contact_name": {
+      "type": "string"
+    },
+    "emergency_contact_phone": {
+      "type": "string"
+    },
+    "emergency_contact_relationship": {
+      "type": "string"
+    },
+    "photos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Profile and employee photo URLs"
     }
-  },
-  "name": "User"
+  }
 }
