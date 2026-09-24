@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, Phone, Mail, UserPlus, ClipboardList, LayoutDashboard, Briefcase, User as UserIcon, SlidersHorizontal } from 'lucide-react';
+import { Search, Phone, Mail, UserPlus, ClipboardList, LayoutDashboard, Briefcase, User as UserIcon, SlidersHorizontal, ShieldCheck } from 'lucide-react';
 import { useOutletContext } from 'react-router-dom';
 import EmployeeFormsModal from '@/components/employees/EmployeeFormsModal';
 import EmployeeDashboardModal from '@/components/employees/EmployeeDashboardModal';
@@ -12,18 +12,12 @@ import AssignJobModal from '@/components/employees/AssignJobModal';
 import EmployeeProfileModal from '@/components/employees/EmployeeProfileModal';
 import InviteEmployeeModal from '@/components/employees/InviteEmployeeModal';
 import ProfileFieldsModal from '@/components/employees/ProfileFieldsModal';
-
-const roleLabels = {
-  admin: 'Admin',
-  operations_manager: 'Ops Manager',
-  supervisor: 'Supervisor',
-  technician: 'Technician',
-  casual_worker: 'Casual',
-  client_viewer: 'Client Viewer',
-};
+import UserLevelsModal from '@/components/employees/UserLevelsModal';
+import { userLevelLabel } from '@/lib/employeeProfile';
 
 const roleBadgeColors = {
   admin: "bg-red-50 text-red-700 border-red-200",
+  user: "bg-slate-50 text-slate-700 border-slate-200",
   operations_manager: "bg-violet-50 text-violet-700 border-violet-200",
   supervisor: "bg-blue-50 text-blue-700 border-blue-200",
   technician: "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -43,6 +37,7 @@ export default function Employees() {
   const [search, setSearch] = useState('');
   const [inviteOpen, setInviteOpen] = useState(false);
   const [fieldsOpen, setFieldsOpen] = useState(false);
+  const [levelsOpen, setLevelsOpen] = useState(false);
   const [viewingEmployee, setViewingEmployee] = useState(null);
   const [viewingDashboard, setViewingDashboard] = useState(null);
   const [assigningJobs, setAssigningJobs] = useState(null);
@@ -51,6 +46,12 @@ export default function Employees() {
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['employees'],
     queryFn: () => base44.entities.User.list('full_name', 200),
+  });
+
+  const { data: levels = [] } = useQuery({
+    queryKey: ['user-levels', user?.organization_id],
+    queryFn: () => base44.entities.UserLevel.filter({ organization_id: user.organization_id }, 'created_date', 100),
+    enabled: !!user?.organization_id,
   });
 
   // Only show employees belonging to the current organization
@@ -71,9 +72,14 @@ export default function Employees() {
         </div>
         <div className="flex items-center gap-2">
           {user?.role === 'admin' && (
-            <Button variant="outline" onClick={() => setFieldsOpen(true)} className="gap-2">
-              <SlidersHorizontal className="h-4 w-4" /> Profile Fields
-            </Button>
+            <>
+              <Button variant="outline" onClick={() => setLevelsOpen(true)} className="gap-2">
+                <ShieldCheck className="h-4 w-4" /> User Levels
+              </Button>
+              <Button variant="outline" onClick={() => setFieldsOpen(true)} className="gap-2">
+                <SlidersHorizontal className="h-4 w-4" /> Profile Fields
+              </Button>
+            </>
           )}
           <Button onClick={() => setInviteOpen(true)} className="gap-2">
             <UserPlus className="h-4 w-4" /> Add Employee
@@ -126,7 +132,7 @@ export default function Employees() {
                   <p className="text-xs text-muted-foreground truncate">{emp.job_title || 'No title set'}</p>
                   <div className="flex items-center gap-2 mt-2">
                     <Badge variant="outline" className={roleBadgeColors[emp.role] || ""}>
-                      {roleLabels[emp.role] || emp.role}
+                      {userLevelLabel(emp, levels)}
                     </Badge>
                     {emp.employment_type && (
                       <Badge variant="outline" className="text-xs">
@@ -201,6 +207,12 @@ export default function Employees() {
       <ProfileFieldsModal
         open={fieldsOpen}
         onOpenChange={setFieldsOpen}
+        organizationId={user?.organization_id}
+      />
+
+      <UserLevelsModal
+        open={levelsOpen}
+        onOpenChange={setLevelsOpen}
         organizationId={user?.organization_id}
       />
 

@@ -31,6 +31,7 @@ export default function Onboarding() {
               phone: pending.phone || '',
               position: pending.position || '',
               job_title: pending.job_title || '',
+              user_level: pending.user_level || '',
             });
           }
           navigate('/', { replace: true });

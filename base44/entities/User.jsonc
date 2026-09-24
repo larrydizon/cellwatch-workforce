@@ -33,6 +33,10 @@
       },
       "description": "List of skills / tickets the employee holds"
     },
+    "user_level": {
+      "type": "string",
+      "description": "The organization's user level assigned to this employee (admin managed)"
+    },
     "ird_number": {
       "type": "string",
       "description": "IRD / tax number (admin managed)"

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,20 +9,27 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { toast } from 'sonner';
 import { POSITIONS } from '@/components/forms/IndustryTemplates';
 
-const ROLES = [
-  { value: 'admin', label: 'Admin' },
-  { value: 'operations_manager', label: 'Operations Manager' },
-  { value: 'supervisor', label: 'Supervisor' },
-  { value: 'technician', label: 'Technician' },
-  { value: 'casual_worker', label: 'Casual Worker' },
-];
-
-const EMPTY = { full_name: '', email: '', role: 'technician', phone: '', position: '', job_title: '' };
+const EMPTY = { full_name: '', email: '', user_level: '', phone: '', position: '', job_title: '' };
 
 export default function InviteEmployeeModal({ open, onOpenChange, organizationId }) {
   const queryClient = useQueryClient();
   const [form, setForm] = useState(EMPTY);
   const [sending, setSending] = useState(false);
+
+  const { data: levels = [] } = useQuery({
+    queryKey: ['user-levels', organizationId],
+    queryFn: () => base44.entities.UserLevel.filter({ organization_id: organizationId }, 'created_date', 100),
+    enabled: !!organizationId && open,
+  });
+
+  // Default new employees to a standard (non-admin) level
+  useEffect(() => {
+    if (!open || form.user_level || levels.length === 0) return;
+    const fallback = levels.find(l => l.value === 'standard_user')
+      || levels.find(l => !l.is_admin)
+      || levels[0];
+    setForm(f => ({ ...f, user_level: fallback.value }));
+  }, [open, levels, form.user_level]);
 
   const set = (key, value) => setForm(f => ({ ...f, [key]: value }));
 
@@ -31,7 +38,8 @@ export default function InviteEmployeeModal({ open, onOpenChange, organizationId
     if (!email) return;
     setSending(true);
     try {
-      const appRole = ['admin', 'operations_manager'].includes(form.role) ? 'admin' : 'user';
+      const level = levels.find(l => l.value === form.user_level);
+      const appRole = level?.is_admin ? 'admin' : 'user';
       await base44.users.inviteUser(email, appRole);
 
       const details = {
@@ -49,6 +57,7 @@ export default function InviteEmployeeModal({ open, onOpenChange, organizationId
           ...details,
           organization_id: organizationId,
           role: appRole,
+          user_level: form.user_level,
           ...(form.full_name ? { full_name: form.full_name } : {}),
         });
       } else {
@@ -57,7 +66,7 @@ export default function InviteEmployeeModal({ open, onOpenChange, organizationId
         const pending = (org.pending_invites || []).filter(p => p.email?.toLowerCase() !== email.toLowerCase());
         await base44.entities.Organization.update(org.id, {
           member_emails: [...new Set([...(org.member_emails || []), email])],
-          pending_invites: [...pending, { email, full_name: form.full_name, role: appRole, ...details }],
+          pending_invites: [...pending, { email, full_name: form.full_name, role: appRole, user_level: form.user_level, ...details }],
         });
       }
 
@@ -90,10 +99,14 @@ export default function InviteEmployeeModal({ open, onOpenChange, organizationId
           </div>
           <div className="space-y-2">
             <Label>User Level</Label>
-            <Select value={form.role} onValueChange={v => set('role', v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+            <Select value={form.user_level || ' '} onValueChange={v => set('user_level', v === ' ' ? '' : v)}>
+              <SelectTrigger><SelectValue placeholder="Select level..." /></SelectTrigger>
               <SelectContent>
-                {ROLES.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
+                {levels.map(l => (
+                  <SelectItem key={l.id} value={l.value}>
+                    {l.is_admin ? `${l.label} (Admin)` : l.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

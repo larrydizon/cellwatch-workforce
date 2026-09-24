@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Save, Mail, Shield, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { POSITIONS } from '@/components/forms/IndustryTemplates';
-import { CONTRACT_TYPES, USER_LEVELS, levelLabel, buildProfileForm, buildProfilePayload } from '@/lib/employeeProfile';
+import { CONTRACT_TYPES, userLevelLabel, buildProfileForm, buildProfilePayload } from '@/lib/employeeProfile';
 import ProfileSection from './ProfileSection';
 import ProfilePhotoSection from './ProfilePhotoSection';
 import CustomFieldsSection from './CustomFieldsSection';
@@ -29,6 +29,12 @@ export default function EmployeeProfileForm({ targetUser, viewer, onSaved }) {
     enabled: !!viewer?.organization_id,
   });
 
+  const { data: levels = [] } = useQuery({
+    queryKey: ['user-levels', viewer?.organization_id],
+    queryFn: () => base44.entities.UserLevel.filter({ organization_id: viewer.organization_id }, 'created_date', 100),
+    enabled: !!viewer?.organization_id,
+  });
+
   const setCustomField = (key, value) =>
     setForm(f => ({ ...f, customFields: { ...f.customFields, [key]: value } }));
 
@@ -40,12 +46,14 @@ export default function EmployeeProfileForm({ targetUser, viewer, onSaved }) {
     setSaving(true);
     try {
       const payload = buildProfilePayload(form, canEditAdminFields);
+      const level = levels.find(l => l.value === form.user_level);
       if (isSelf) {
         await base44.auth.updateMe(payload);
       } else {
         await base44.entities.User.update(targetUser.id, {
           ...payload,
-          ...(canEditAdminFields ? { role: form.role } : {}),
+          // Administrator access follows the chosen user level
+          ...(canEditAdminFields && level ? { role: level.is_admin ? 'admin' : 'user' } : {}),
         });
       }
       queryClient.invalidateQueries({ queryKey: ['employees'] });
@@ -78,15 +86,19 @@ export default function EmployeeProfileForm({ targetUser, viewer, onSaved }) {
           </p>
           <div className="mt-2">
             {canEditAdminFields ? (
-              <Select value={form.role} onValueChange={(v) => set('role', v)}>
-                <SelectTrigger className="h-8 w-56"><SelectValue /></SelectTrigger>
+              <Select value={form.user_level || ' '} onValueChange={(v) => set('user_level', v === ' ' ? '' : v)}>
+                <SelectTrigger className="h-8 w-56"><SelectValue placeholder="Select user level..." /></SelectTrigger>
                 <SelectContent>
-                  {USER_LEVELS.map(l => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}
+                  {levels.map(l => (
+                    <SelectItem key={l.id} value={l.value}>
+                      {l.is_admin ? `${l.label} (Admin)` : l.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             ) : (
               <Badge variant="outline" className="gap-1">
-                <Shield className="h-3 w-3" /> {levelLabel(form.role)}
+                <Shield className="h-3 w-3" /> {userLevelLabel(targetUser, levels)}
               </Badge>
             )}
           </div>
