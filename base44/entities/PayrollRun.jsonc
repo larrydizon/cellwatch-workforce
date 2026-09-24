@@ -1,0 +1,164 @@
+{
+  "name": "PayrollRun",
+  "type": "object",
+  "properties": {
+    "organization_id": {
+      "type": "string",
+      "description": "Tenant (organization) this payroll run belongs to"
+    },
+    "period_start": {
+      "type": "string",
+      "format": "date"
+    },
+    "period_end": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "processed",
+        "paid"
+      ],
+      "default": "processed"
+    },
+    "lines": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "Per-employee lines: {employee_email, employee_name, regular_hours, overtime_hours, hourly_rate, overtime_multiplier, gross_pay}"
+    },
+    "total_hours": {
+      "type": "number"
+    },
+    "total_overtime_hours": {
+      "type": "number"
+    },
+    "total_gross": {
+      "type": "number"
+    },
+    "employee_count": {
+      "type": "number"
+    },
+    "processed_by": {
+      "type": "string",
+      "description": "Email of the admin who processed the run"
+    },
+    "processed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "period_start",
+    "period_end",
+    "lines"
+  ],
+  "rls": {
+    "read": {
+      "$and": [
+        {
+          "data.organization_id": "{{user.data.organization_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "operations_manager"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "supervisor"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "create": {
+      "$and": [
+        {
+          "data.organization_id": "{{user.data.organization_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "operations_manager"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "supervisor"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$and": [
+        {
+          "data.organization_id": "{{user.data.organization_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "operations_manager"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "supervisor"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$and": [
+        {
+          "data.organization_id": "{{user.data.organization_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "operations_manager"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "supervisor"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

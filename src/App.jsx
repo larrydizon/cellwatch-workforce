@@ -23,6 +23,7 @@ import Forms from '@/pages/Forms';
 import MyForms from '@/pages/MyForms';
 import Onboarding from '@/pages/Onboarding';
 import Billing from '@/pages/Billing';
+import Payroll from '@/pages/Payroll';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -68,6 +69,7 @@ const AuthenticatedApp = () => {
         <Route path="/forms" element={<Forms />} />
         <Route path="/my-forms" element={<MyForms />} />
         <Route path="/billing" element={<Billing />} />
+        <Route path="/payroll" element={<Payroll />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Calendar, Briefcase, Clock,
   FileText, MessageSquare, Settings, ChevronLeft, ChevronRight,
-  ClipboardList, Bell, UmbrellaOff, LayoutGrid, CreditCard
+  ClipboardList, Bell, UmbrellaOff, LayoutGrid, CreditCard, DollarSign
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -15,6 +15,7 @@ const navItems = [
   { label: 'Jobs', icon: Briefcase, path: '/jobs' },
   { label: 'Time Clock', icon: Clock, path: '/time-clock' },
   { label: 'Timesheets', icon: FileText, path: '/timesheets' },
+  { label: 'Payroll', icon: DollarSign, path: '/payroll', adminOnly: true },
   { label: 'Leave', icon: UmbrellaOff, path: '/leave' },
   { label: 'Forms', icon: ClipboardList, path: '/forms', adminOnly: true },
   { label: 'My Forms', icon: ClipboardList, path: '/my-forms' },
