@@ -93,7 +93,7 @@ export default function Payroll() {
 
     setProcessing(true);
     try {
-      await base44.entities.PayrollRun.create({
+      const run = await base44.entities.PayrollRun.create({
         organization_id: user?.data?.organization_id,
         period_start: periodStart,
         period_end: periodEnd,
@@ -106,6 +106,23 @@ export default function Payroll() {
         processed_by: user?.email,
         processed_at: new Date().toISOString(),
       });
+      await base44.entities.Payslip.bulkCreate(
+        lines.map(l => ({
+          organization_id: user?.data?.organization_id,
+          payroll_run_id: run.id,
+          employee_email: l.employee_email,
+          employee_name: l.employee_name,
+          period_start: periodStart,
+          period_end: periodEnd,
+          regular_hours: l.regular_hours,
+          overtime_hours: l.overtime_hours,
+          hourly_rate: l.hourly_rate,
+          overtime_multiplier: l.overtime_multiplier,
+          gross_pay: l.gross_pay,
+          status: 'processed',
+        }))
+      );
+
       queryClient.invalidateQueries({ queryKey: ['payroll-runs'] });
       toast.success('Payroll run created');
       setTab('history');
@@ -121,11 +138,16 @@ export default function Payroll() {
 
   const markPaid = async (run) => {
     await base44.entities.PayrollRun.update(run.id, { status: 'paid' });
+    await base44.entities.Payslip.updateMany(
+      { payroll_run_id: run.id },
+      { $set: { status: 'paid' } }
+    );
     queryClient.invalidateQueries({ queryKey: ['payroll-runs'] });
     toast.success('Marked as paid');
   };
 
   const deleteRun = async (run) => {
+    await base44.entities.Payslip.deleteMany({ payroll_run_id: run.id });
     await base44.entities.PayrollRun.delete(run.id);
     queryClient.invalidateQueries({ queryKey: ['payroll-runs'] });
     toast.success('Payroll run deleted');
