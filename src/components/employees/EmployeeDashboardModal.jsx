@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Clock, Briefcase, FileText, LogIn, LogOut } from 'lucide-react';
 import StatCard from '@/components/dashboard/StatCard';
 import TodayJobsList from '@/components/dashboard/TodayJobsList';
+import FormsReminder from '@/components/dashboard/FormsReminder';
 import moment from 'moment';
 
 export default function EmployeeDashboardModal({ employee, open, onOpenChange }) {
@@ -66,6 +67,9 @@ export default function EmployeeDashboardModal({ employee, open, onOpenChange })
             </div>
           )}
         </div>
+
+        {/* Forms to complete — mirrors the field dashboard */}
+        <FormsReminder user={{ email }} />
 
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
