@@ -75,11 +75,18 @@ export default function TimeClock() {
     queryFn: () => base44.entities.Job.filter({ status: 'in_progress' }, '-created_date', 50),
   });
 
-  // Load active forms that require completion before clock-in
+  // Load active forms (used to resolve both general pre-start forms and assigned forms)
   const { data: allForms = [] } = useQuery({
     queryKey: ['clockin-required-forms'],
-    queryFn: () => base44.entities.FormTemplate.filter({ require_before_clockin: true, is_active: true }, 'title', 50),
+    queryFn: () => base44.entities.FormTemplate.filter({ is_active: true }, 'title', 100),
     enabled: !activeEntry,
+  });
+
+  // Forms assigned directly to this employee that are still pending
+  const { data: myAssignments = [] } = useQuery({
+    queryKey: ['clockin-assignments', user?.email],
+    queryFn: () => base44.entities.FormAssignment.filter({ employee_email: user.email, status: 'pending' }, '-assigned_at', 100),
+    enabled: !!user?.email && !activeEntry,
   });
 
   // Check if user already submitted these forms today/this week
@@ -93,8 +100,17 @@ export default function TimeClock() {
   const activeJob = jobs.find(j => j.id === selectedJob);
   const selectedJobType = activeJob?.job_type || '';
 
+  const prestartForms = allForms.filter(f => f.require_before_clockin);
+
+  // Forms assigned directly to this employee and marked required before clock-in are
+  // mandatory for clock-in, regardless of position or job category
+  const assignedRequiredForms = myAssignments
+    .filter(a => a.status === 'pending')
+    .map(a => prestartForms.find(f => f.id === a.form_template_id))
+    .filter(Boolean);
+
   // Admins are not required to complete pre-start forms
-  const requiredForms = isAdmin ? [] : allForms.filter(form => {
+  const generalRequiredForms = isAdmin ? [] : prestartForms.filter(form => {
     // Filter by worker's position: universal forms (no industry) show to everyone;
     // industry-specific forms only show to workers with matching position
     if (form.industry && form.industry !== position) return false;
@@ -116,6 +132,11 @@ export default function TimeClock() {
     }
     return false;
   });
+
+  const requiredForms = isAdmin ? [] : [
+    ...generalRequiredForms,
+    ...assignedRequiredForms.filter(f => !generalRequiredForms.some(g => g.id === f.id)),
+  ];
 
   const { data: todayEntries = [] } = useQuery({
     queryKey: ['today-entries', user?.email],
@@ -278,7 +299,7 @@ export default function TimeClock() {
               ))}
             </SelectContent>
           </Select>
-          {allForms.length > 0 && !position && (
+          {prestartForms.length > 0 && !position && (
             <p className="text-xs text-muted-foreground">Select your position to see your industry-specific pre-start form.</p>
           )}
         </div>
@@ -301,7 +322,7 @@ export default function TimeClock() {
               ))}
             </SelectContent>
           </Select>
-          {allForms.some(f => f.job_types?.length) && !activeJob && (
+          {prestartForms.some(f => f.job_types?.length) && !activeJob && (
             <p className="text-xs text-muted-foreground">
               Select the job you're working on to see any job-specific pre-start forms.
             </p>
@@ -389,6 +410,7 @@ export default function TimeClock() {
         <PreStartFormModal
           forms={requiredForms}
           user={user}
+          assignments={myAssignments}
           jobId={selectedJob || undefined}
           jobTitle={jobs.find(j => j.id === selectedJob)?.title}
           open={showPreStartForms}

@@ -7,7 +7,7 @@ import { ClipboardCheck, ChevronRight, ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import QuestionField from './QuestionField';
 
-export default function PreStartFormModal({ forms, user, jobId, jobTitle, open, onOpenChange, onAllCompleted }) {
+export default function PreStartFormModal({ forms, user, assignments, jobId, jobTitle, open, onOpenChange, onAllCompleted }) {
   const queryClient = useQueryClient();
   const [formIndex, setFormIndex] = useState(0);
   const [answers, setAnswers] = useState({});
@@ -17,11 +17,27 @@ export default function PreStartFormModal({ forms, user, jobId, jobTitle, open, 
   const questions = currentForm?.questions || [];
 
   const submitMutation = useMutation({
-    mutationFn: (data) => base44.entities.FormSubmission.create(data),
+    mutationFn: async (data) => {
+      const submission = await base44.entities.FormSubmission.create(data);
+      // If this form was assigned to the employee, mark the assignment complete
+      const assignment = (assignments || []).find(
+        a => a.form_template_id === currentForm.id && a.status === 'pending'
+      );
+      if (assignment) {
+        await base44.entities.FormAssignment.update(assignment.id, {
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          form_submission_id: submission.id,
+        });
+      }
+      return submission;
+    },
     onSuccess: () => {
       const nextCompleted = [...completedForms, currentForm.id];
       setCompletedForms(nextCompleted);
       queryClient.invalidateQueries({ queryKey: ['form-submissions'] });
+      queryClient.invalidateQueries({ queryKey: ['clockin-assignments'] });
+      queryClient.invalidateQueries({ queryKey: ['my-assignments'] });
 
       if (nextCompleted.length === forms.length) {
         toast.success('All forms completed! Clocking in...');
