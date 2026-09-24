@@ -83,9 +83,11 @@ export default function FormBuilderModal({ open, onOpenChange, editingForm }) {
   };
 
   const saveMutation = useMutation({
-    mutationFn: (data) => editingForm
-      ? base44.entities.FormTemplate.update(editingForm.id, data)
-      : base44.entities.FormTemplate.create(data),
+    mutationFn: async (data) => {
+      if (editingForm) return base44.entities.FormTemplate.update(editingForm.id, data);
+      const me = await base44.auth.me();
+      return base44.entities.FormTemplate.create({ ...data, organization_id: me.organization_id });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['form-templates'] });
       toast.success(editingForm ? 'Form updated' : 'Form created');

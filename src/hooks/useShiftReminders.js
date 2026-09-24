@@ -56,6 +56,7 @@ async function checkAndNotify(user) {
     // Remind to clock in if shift starts within 15 minutes and not yet clocked in
     if (minutesUntilStart >= -5 && minutesUntilStart <= 15 && !isClockedIn) {
       await createNotificationIfNotExists(user.email, `shift_clockin_${shift.id}`, {
+        organization_id: user.organization_id,
         recipient_email: user.email,
         title: '⏰ Time to Clock In',
         message: `Your shift "${shift.title}" ${minutesUntilStart <= 0 ? 'has started' : `starts in ${minutesUntilStart} min`}. Don't forget to clock in!`,
@@ -71,6 +72,7 @@ async function checkAndNotify(user) {
       const minutesDiff = Math.abs(clockInTime.diff(startTime, 'minutes'));
       if (minutesDiff <= 60) {
         await createNotificationIfNotExists(user.email, `shift_clockout_${shift.id}_${now.format('YYYY-MM-DD')}`, {
+          organization_id: user.organization_id,
           recipient_email: user.email,
           title: '🔔 Don\'t Forget to Clock Out',
           message: `Your shift "${shift.title}" ended at ${endTime.format('h:mm A')}. Please clock out now.`,

@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Plus, Search, Phone, Mail, UserPlus, ClipboardList, LayoutDashboard } from 'lucide-react';
 import { toast } from 'sonner';
+import { useOutletContext } from 'react-router-dom';
 import EmployeeFormsModal from '@/components/employees/EmployeeFormsModal';
 import EmployeeDashboardModal from '@/components/employees/EmployeeDashboardModal';
 
@@ -38,6 +39,7 @@ const empTypeLabels = {
 };
 
 export default function Employees() {
+  const { user } = useOutletContext();
   const [search, setSearch] = useState('');
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
@@ -51,7 +53,10 @@ export default function Employees() {
     queryFn: () => base44.entities.User.list('full_name', 200),
   });
 
-  const filtered = users.filter(u =>
+  // Only show employees belonging to the current organization
+  const orgUsers = users.filter(u => u.organization_id === user?.organization_id);
+
+  const filtered = orgUsers.filter(u =>
     u.full_name?.toLowerCase().includes(search.toLowerCase()) ||
     u.email?.toLowerCase().includes(search.toLowerCase()) ||
     u.job_title?.toLowerCase().includes(search.toLowerCase())
@@ -61,6 +66,17 @@ export default function Employees() {
     if (!inviteEmail) return;
     const appRole = ['admin', 'operations_manager'].includes(inviteRole) ? 'admin' : 'user';
     await base44.users.inviteUser(inviteEmail, appRole);
+    // Add the invitee to this organization so they join the same workspace on accepting
+    try {
+      const org = await base44.entities.Organization.get(user.organization_id);
+      if (org && !(org.member_emails || []).includes(inviteEmail)) {
+        await base44.entities.Organization.update(org.id, {
+          member_emails: [...(org.member_emails || []), inviteEmail],
+        });
+      }
+    } catch (e) {
+      // invite is still sent; org membership can be granted later
+    }
     toast.success(`Invitation sent to ${inviteEmail}`);
     setInviteOpen(false);
     setInviteEmail('');
@@ -71,7 +87,7 @@ export default function Employees() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Employees</h1>
-          <p className="text-sm text-muted-foreground mt-1">{users.length} team members</p>
+          <p className="text-sm text-muted-foreground mt-1">{orgUsers.length} team members</p>
         </div>
         <Button onClick={() => setInviteOpen(true)} className="gap-2">
           <UserPlus className="h-4 w-4" /> Invite Employee

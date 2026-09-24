@@ -48,6 +48,7 @@ export default function Jobs() {
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Job.create({
       ...data,
+      organization_id: user.organization_id,
       job_number: `CW-${Date.now().toString(36).toUpperCase()}`,
       estimated_hours: data.estimated_hours ? Number(data.estimated_hours) : undefined,
     }),

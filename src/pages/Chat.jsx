@@ -46,6 +46,7 @@ export default function Chat() {
   const sendMutation = useMutation({
     mutationFn: async (content) => {
       await base44.entities.Message.create({
+        organization_id: user.organization_id,
         conversation_id: activeConvo.id,
         sender_email: user.email,
         sender_name: user.full_name,
@@ -68,6 +69,7 @@ export default function Chat() {
     mutationFn: async () => {
       const targetUser = allUsers.find(u => u.email === newChatUser);
       return base44.entities.Conversation.create({
+        organization_id: user.organization_id,
         type: 'direct',
         participants: [user.email, newChatUser],
         title: targetUser?.full_name || newChatUser,
@@ -225,7 +227,7 @@ export default function Chat() {
               <Select value={newChatUser} onValueChange={setNewChatUser}>
                 <SelectTrigger><SelectValue placeholder="Choose..." /></SelectTrigger>
                 <SelectContent>
-                  {allUsers.filter(u => u.email !== user?.email).map(u => (
+                  {allUsers.filter(u => u.email !== user?.email && u.organization_id === user?.organization_id).map(u => (
                     <SelectItem key={u.id} value={u.email}>{u.full_name || u.email}</SelectItem>
                   ))}
                 </SelectContent>

@@ -123,6 +123,7 @@ export default function TimeClock() {
     mutationFn: async () => {
       const job = jobs.find(j => j.id === selectedJob);
       return base44.entities.TimeEntry.create({
+        organization_id: user.organization_id,
         employee_email: user.email,
         employee_name: user.full_name,
         clock_in: new Date().toISOString(),

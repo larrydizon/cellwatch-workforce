@@ -46,6 +46,7 @@ export default function CompleteFormModal({ form, assignment, user, open, onOpen
     }
     const answerList = questions.map(q => ({ question_id: q.id, question_label: q.label, answer: answers[q.id] ?? '' }));
     submitMutation.mutate({
+      organization_id: user.organization_id,
       form_template_id: form.id,
       form_title: form.title,
       employee_email: user.email,

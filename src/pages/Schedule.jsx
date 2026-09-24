@@ -56,8 +56,11 @@ export default function Schedule() {
     queryFn: () => base44.entities.User.list('full_name', 200),
   });
 
+  // Only employees belonging to the current organization
+  const orgUsers = users.filter(u => u.organization_id === currentUser?.organization_id);
+
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Shift.create({ ...data, status: 'scheduled' }),
+    mutationFn: (data) => base44.entities.Shift.create({ ...data, status: 'scheduled', organization_id: currentUser?.organization_id }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shifts'] });
       setCreateOpen(false);
@@ -153,7 +156,7 @@ export default function Schedule() {
               }}>
                 <SelectTrigger><SelectValue placeholder="Select employee" /></SelectTrigger>
                 <SelectContent>
-                  {users.map(u => (
+                  {orgUsers.map(u => (
                     <SelectItem key={u.id} value={u.email}>{u.full_name || u.email}</SelectItem>
                   ))}
                 </SelectContent>

@@ -15,9 +15,20 @@ export default function Onboarding() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    base44.auth.me().then(u => {
+    base44.auth.me().then(async u => {
       setUser(u);
-      if (u?.organization_id) navigate('/', { replace: true });
+      if (u?.organization_id) { navigate('/', { replace: true }); return; }
+      // If the user was invited to an organization, join it instead of creating a new one
+      try {
+        const orgs = await base44.entities.Organization.list('-created_date', 50);
+        if (orgs.length) {
+          await base44.auth.updateMe({ organization_id: orgs[0].id });
+          navigate('/', { replace: true });
+          return;
+        }
+      } catch (e) {
+        // fall through to workspace creation
+      }
       setLoading(false);
     }).catch(() => {
       base44.auth.redirectToLogin();

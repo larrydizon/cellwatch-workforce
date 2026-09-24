@@ -59,6 +59,7 @@ export default function Leave() {
       const days = end.diff(start, 'days') + 1;
       return base44.entities.LeaveRequest.create({
         ...form,
+        organization_id: user.organization_id,
         employee_email: user.email,
         employee_name: user.full_name,
         days_requested: days,

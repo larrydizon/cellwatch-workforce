@@ -29,6 +29,9 @@ export default function ManageTrainingModal({ open, onOpenChange, user, editingT
     enabled: isAdmin && open,
   });
 
+  // Only employees belonging to the current organization
+  const orgUsers = users.filter(u => u.organization_id === user?.organization_id);
+
   useEffect(() => {
     if (!open) return;
     if (editingTraining) {
@@ -64,6 +67,7 @@ export default function ManageTrainingModal({ open, onOpenChange, user, editingT
     if (!employeeEmail) { toast.error('Select an employee'); return; }
     const u = users.find(x => x.email === employeeEmail);
     saveMutation.mutate({
+      organization_id: user.organization_id,
       employee_email: employeeEmail,
       employee_name: u?.full_name || employeeEmail,
       title, type,
@@ -103,7 +107,7 @@ export default function ManageTrainingModal({ open, onOpenChange, user, editingT
               <Select value={employeeEmail} onValueChange={setEmployeeEmail}>
                 <SelectTrigger><SelectValue placeholder="Select employee..." /></SelectTrigger>
                 <SelectContent>
-                  {users.map(u => <SelectItem key={u.id} value={u.email}>{u.full_name || u.email}</SelectItem>)}
+                  {orgUsers.map(u => <SelectItem key={u.id} value={u.email}>{u.full_name || u.email}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>

@@ -2,6 +2,10 @@
   "name": "Shift",
   "type": "object",
   "properties": {
+    "organization_id": {
+      "type": "string",
+      "description": "Tenant (organization) this shift belongs to"
+    },
     "title": {
       "type": "string",
       "description": "Shift title"
@@ -77,84 +81,112 @@
   ],
   "rls": {
     "create": {
-      "$or": [
+      "$and": [
         {
-          "user_condition": {
-            "role": "admin"
-          }
+          "data.organization_id": "{{user.data.organization_id}}"
         },
         {
-          "user_condition": {
-            "role": "operations_manager"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "supervisor"
-          }
+          "$or": [
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "operations_manager"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "supervisor"
+              }
+            }
+          ]
         }
       ]
     },
     "read": {
-      "$or": [
+      "$and": [
         {
-          "user_condition": {
-            "role": "admin"
-          }
+          "data.organization_id": "{{user.data.organization_id}}"
         },
         {
-          "user_condition": {
-            "role": "operations_manager"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "supervisor"
-          }
-        },
-        {
-          "data.assigned_to": "{{user.email}}"
+          "$or": [
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "operations_manager"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "supervisor"
+              }
+            },
+            {
+              "data.assigned_to": "{{user.email}}"
+            }
+          ]
         }
       ]
     },
     "update": {
-      "$or": [
+      "$and": [
         {
-          "user_condition": {
-            "role": "admin"
-          }
+          "data.organization_id": "{{user.data.organization_id}}"
         },
         {
-          "user_condition": {
-            "role": "operations_manager"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "supervisor"
-          }
-        },
-        {
-          "data.assigned_to": "{{user.email}}"
+          "$or": [
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "operations_manager"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "supervisor"
+              }
+            },
+            {
+              "data.assigned_to": "{{user.email}}"
+            }
+          ]
         }
       ]
     },
     "delete": {
-      "$or": [
+      "$and": [
         {
-          "user_condition": {
-            "role": "admin"
-          }
+          "data.organization_id": "{{user.data.organization_id}}"
         },
         {
-          "user_condition": {
-            "role": "operations_manager"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "supervisor"
-          }
+          "$or": [
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "operations_manager"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "supervisor"
+              }
+            }
+          ]
         }
       ]
     }

@@ -28,6 +28,9 @@ export default function AssignFormModal({ open, onOpenChange, user }) {
     enabled: open,
   });
 
+  // Only employees belonging to the current organization
+  const orgUsers = users.filter(u => u.organization_id === user?.organization_id);
+
   useEffect(() => {
     if (open) { setFormId(''); setSelectedEmails([]); setDueDate(''); setNotes(''); }
   }, [open]);
@@ -38,6 +41,7 @@ export default function AssignFormModal({ open, onOpenChange, user }) {
       const assignments = selectedEmails.map(email => {
         const u = users.find(x => x.email === email);
         return {
+          organization_id: user.organization_id,
           form_template_id: form.id,
           form_title: form.title,
           form_type: form.form_type,
@@ -52,6 +56,7 @@ export default function AssignFormModal({ open, onOpenChange, user }) {
       });
       await base44.entities.FormAssignment.bulkCreate(assignments);
       await base44.entities.Notification.bulkCreate(selectedEmails.map(email => ({
+        organization_id: user.organization_id,
         recipient_email: email,
         title: 'New form assigned',
         message: `"${form.title}" has been assigned to you${dueDate ? ` due ${dueDate}` : ''}.`,
@@ -104,12 +109,12 @@ export default function AssignFormModal({ open, onOpenChange, user }) {
             <div className="flex items-center justify-between">
               <Label>Assign to *</Label>
               <div className="flex gap-2">
-                <button onClick={() => setSelectedEmails(users.map(u => u.email))} className="text-xs text-primary hover:underline">Select all</button>
+                <button onClick={() => setSelectedEmails(orgUsers.map(u => u.email))} className="text-xs text-primary hover:underline">Select all</button>
                 <button onClick={() => setSelectedEmails([])} className="text-xs text-muted-foreground hover:underline">Clear</button>
               </div>
             </div>
             <div className="border border-border rounded-lg max-h-52 overflow-y-auto divide-y divide-border">
-              {users.map(u => (
+              {orgUsers.map(u => (
                 <label key={u.id} className="flex items-center gap-2 p-2.5 cursor-pointer hover:bg-muted/50">
                   <input type="checkbox" checked={selectedEmails.includes(u.email)} onChange={() => toggleEmail(u.email)} className="rounded" />
                   <span className="text-sm">{u.full_name || u.email}</span>
