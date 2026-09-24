@@ -10,6 +10,7 @@ import moment from 'moment';
 import { toast } from 'sonner';
 import LocationMapLink from '@/components/timeclock/LocationMapLink';
 import PreStartFormModal from '@/components/forms/PreStartFormModal';
+import AdminClockPanel from '@/components/timeclock/AdminClockPanel';
 import { POSITIONS } from '@/components/forms/IndustryTemplates';
 
 const TRACKING_INTERVAL_KEY = 'location_tracking_interval_ms';
@@ -435,6 +436,8 @@ export default function TimeClock() {
           </div>
         )}
       </div>
+      {isAdmin && <AdminClockPanel user={user} />}
+
       {showPreStartForms && requiredForms.length > 0 && (
         <PreStartFormModal
           forms={requiredForms}
