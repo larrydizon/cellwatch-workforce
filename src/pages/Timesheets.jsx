@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Check, X, Clock, Download, FileText } from 'lucide-react';
+import { Check, X, Clock, Download, FileText, DollarSign } from 'lucide-react';
 import moment from 'moment';
 import { toast } from 'sonner';
+import { exportPayrollCSV } from '@/lib/payrollExport';
 
 const statusBadge = {
   active: "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -22,6 +23,7 @@ const statusBadge = {
 export default function Timesheets() {
   const { user } = useOutletContext();
   const [filter, setFilter] = useState('all');
+  const [exportingPayroll, setExportingPayroll] = useState(false);
   const queryClient = useQueryClient();
 
   const isAdmin = ['admin', 'operations_manager', 'supervisor'].includes(user?.role);
@@ -80,6 +82,21 @@ export default function Timesheets() {
     toast.success('CSV exported');
   };
 
+  const exportPayroll = async () => {
+    setExportingPayroll(true);
+    try {
+      const approved = await base44.entities.TimeEntry.filter({ status: 'approved' }, '-created_date', 500);
+      if (approved.length === 0) {
+        toast.error('No confirmed timesheets to export');
+        return;
+      }
+      const employeeCount = exportPayrollCSV(approved);
+      toast.success(`Payroll exported — ${employeeCount} ${employeeCount === 1 ? 'employee' : 'employees'}`);
+    } finally {
+      setExportingPayroll(false);
+    }
+  };
+
   const grouped = entries.reduce((acc, entry) => {
     const date = moment(entry.clock_in).format('YYYY-MM-DD');
     if (!acc[date]) acc[date] = [];
@@ -94,9 +111,17 @@ export default function Timesheets() {
           <h1 className="text-2xl font-bold tracking-tight">Timesheets</h1>
           <p className="text-sm text-muted-foreground mt-1">{entries.length} entries</p>
         </div>
-        <Button variant="outline" onClick={exportCSV} className="gap-2">
-          <Download className="h-4 w-4" /> Export CSV
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={exportCSV} className="gap-2">
+            <Download className="h-4 w-4" /> Export CSV
+          </Button>
+          {isAdmin && (
+            <Button onClick={exportPayroll} disabled={exportingPayroll} className="gap-2">
+              <DollarSign className="h-4 w-4" />
+              {exportingPayroll ? 'Exporting…' : 'Payroll Export'}
+            </Button>
+          )}
+        </div>
       </div>
 
       <Tabs value={filter} onValueChange={setFilter}>
