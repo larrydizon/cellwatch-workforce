@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import Sidebar from './Sidebar';
 import MobileNav from './MobileNav';
 import TopBar from './TopBar';
 import { cn } from '@/lib/utils';
 import { base44 } from '@/api/base44Client';
+import { isAdminUser } from '@/lib/employeeProfile';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -51,13 +53,21 @@ export default function AppLayout() {
 
   useShiftReminders(user);
 
+  const { data: levels = [] } = useQuery({
+    queryKey: ['user-levels', user?.organization_id],
+    queryFn: () => base44.entities.UserLevel.filter({ organization_id: user.organization_id }, 'created_date', 100),
+    enabled: !!user?.organization_id,
+  });
+
+  const isAdmin = isAdminUser(user, levels);
+
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
 
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} user={user} />
+      <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} user={user} isAdmin={isAdmin} />
 
       {/* Mobile sidebar sheet */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -74,7 +84,7 @@ export default function AppLayout() {
           <nav className="py-4 px-2 space-y-1">
             {mobileNavItems.filter(item =>
               (!item.adminOnly || ['admin', 'operations_manager', 'supervisor'].includes(user?.role)) &&
-              (!item.ownerOnly || user?.role === 'admin')
+              (!item.ownerOnly || isAdmin)
             ).map((item) => {
               const isActive = location.pathname === item.path ||
                 (item.path !== '/' && location.pathname.startsWith(item.path));

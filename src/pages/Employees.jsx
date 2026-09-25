@@ -13,7 +13,7 @@ import EmployeeProfileModal from '@/components/employees/EmployeeProfileModal';
 import InviteEmployeeModal from '@/components/employees/InviteEmployeeModal';
 import ProfileFieldsModal from '@/components/employees/ProfileFieldsModal';
 import UserLevelsModal from '@/components/employees/UserLevelsModal';
-import { userLevelLabel } from '@/lib/employeeProfile';
+import { userLevelLabel, isAdminUser } from '@/lib/employeeProfile';
 
 const roleBadgeColors = {
   admin: "bg-red-50 text-red-700 border-red-200",
@@ -54,6 +54,8 @@ export default function Employees() {
     enabled: !!user?.organization_id,
   });
 
+  const isAdmin = isAdminUser(user, levels);
+
   // Only show employees belonging to the current organization
   const orgUsers = users.filter(u => u.organization_id === user?.organization_id);
 
@@ -63,7 +65,7 @@ export default function Employees() {
     u.job_title?.toLowerCase().includes(search.toLowerCase())
   );
 
-  if (user && user.role !== 'admin') {
+  if (user && !isAdmin) {
     return (
       <div className="max-w-md mx-auto text-center py-20 space-y-2">
         <ShieldCheck className="h-8 w-8 mx-auto text-muted-foreground" />
@@ -83,7 +85,7 @@ export default function Employees() {
           <p className="text-sm text-muted-foreground mt-1">{orgUsers.length} team members</p>
         </div>
         <div className="flex items-center gap-2">
-          {user?.role === 'admin' && (
+          {isAdmin && (
             <>
               <Button variant="outline" onClick={() => setLevelsOpen(true)} className="gap-2">
                 <ShieldCheck className="h-4 w-4" /> User Levels

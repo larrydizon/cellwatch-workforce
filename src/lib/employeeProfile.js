@@ -31,6 +31,13 @@ export function userLevelLabel(user, levels = []) {
   return LEGACY_LEVEL_LABELS[user.user_level] || LEGACY_LEVEL_LABELS[user.role] || user.role || 'User';
 }
 
+// Admin access follows either the app role or an assigned user level with admin rights
+export function isAdminUser(user, levels = []) {
+  if (!user) return false;
+  if (user.role === 'admin') return true;
+  return levels.some(l => l.value === user.user_level && l.is_admin);
+}
+
 export const CONTRACT_TYPES = [
   { value: 'full_time', label: 'Full Time' },
   { value: 'part_time', label: 'Part Time' },

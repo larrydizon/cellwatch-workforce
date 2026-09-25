@@ -26,9 +26,9 @@ const navItems = [
   { label: 'Settings', icon: Settings, path: '/settings' },
 ];
 
-export default function Sidebar({ collapsed, onToggle, user }) {
+export default function Sidebar({ collapsed, onToggle, user, isAdmin }) {
   const location = useLocation();
-  const isAdmin = ['admin', 'operations_manager', 'supervisor'].includes(user?.role);
+  const hasAdminAccess = ['admin', 'operations_manager', 'supervisor'].includes(user?.role);
 
   return (
     <aside
@@ -58,7 +58,7 @@ export default function Sidebar({ collapsed, onToggle, user }) {
       {/* Nav */}
       <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
         {navItems.filter(item =>
-          (!item.adminOnly || isAdmin) && (!item.ownerOnly || user?.role === 'admin')
+          (!item.adminOnly || hasAdminAccess) && (!item.ownerOnly || isAdmin)
         ).map((item) => {
           const isActive = location.pathname === item.path || 
             (item.path !== '/' && location.pathname.startsWith(item.path));

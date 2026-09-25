@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Save, Mail, Shield, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { POSITIONS } from '@/components/forms/IndustryTemplates';
-import { CONTRACT_TYPES, userLevelLabel, buildProfileForm, buildProfilePayload } from '@/lib/employeeProfile';
+import { CONTRACT_TYPES, userLevelLabel, buildProfileForm, buildProfilePayload, isAdminUser } from '@/lib/employeeProfile';
 import ProfileSection from './ProfileSection';
 import ProfilePhotoSection from './ProfilePhotoSection';
 import CustomFieldsSection from './CustomFieldsSection';
@@ -18,10 +18,6 @@ import CustomFieldsSection from './CustomFieldsSection';
 export default function EmployeeProfileForm({ targetUser, viewer, onSaved }) {
   const queryClient = useQueryClient();
   const isSelf = viewer?.id === targetUser?.id;
-  // Pay details are managed by administrators (including their own record);
-  // the user level is never editable on your own record
-  const canEditPayFields = viewer?.role === 'admin';
-  const canEditAdminFields = canEditPayFields && !isSelf;
   const [form, setForm] = useState(() => buildProfileForm(targetUser));
   const [saving, setSaving] = useState(false);
 
@@ -36,6 +32,11 @@ export default function EmployeeProfileForm({ targetUser, viewer, onSaved }) {
     queryFn: () => base44.entities.UserLevel.filter({ organization_id: viewer.organization_id }, 'created_date', 100),
     enabled: !!viewer?.organization_id,
   });
+
+  // Pay details are managed by administrators (including their own record);
+  // the user level is never editable on your own record
+  const canEditPayFields = isAdminUser(viewer, levels);
+  const canEditAdminFields = canEditPayFields && !isSelf;
 
   const setCustomField = (key, value) =>
     setForm(f => ({ ...f, customFields: { ...f.customFields, [key]: value } }));
