@@ -22,14 +22,12 @@ export default function AssignFormModal({ open, onOpenChange, user }) {
     enabled: open,
   });
 
-  const { data: users = [] } = useQuery({
-    queryKey: ['all-users'],
-    queryFn: () => base44.entities.User.list('-created_date', 200),
-    enabled: open,
+  // Read the team directory so employees who have been added but not signed in yet are listed too
+  const { data: orgUsers = [] } = useQuery({
+    queryKey: ['employees', user?.organization_id],
+    queryFn: () => base44.entities.Employee.filter({ organization_id: user.organization_id }, 'full_name', 500),
+    enabled: open && !!user?.organization_id,
   });
-
-  // Only employees belonging to the current organization
-  const orgUsers = users.filter(u => u.organization_id === user?.organization_id);
 
   useEffect(() => {
     if (open) { setFormId(''); setSelectedEmails([]); setDueDate(''); setNotes(''); }
@@ -39,7 +37,7 @@ export default function AssignFormModal({ open, onOpenChange, user }) {
     mutationFn: async () => {
       const form = forms.find(f => f.id === formId);
       const assignments = selectedEmails.map(email => {
-        const u = users.find(x => x.email === email);
+        const u = orgUsers.find(x => x.email === email);
         return {
           organization_id: user.organization_id,
           form_template_id: form.id,
