@@ -1,0 +1,145 @@
+{
+  "name": "Employee",
+  "type": "object",
+  "properties": {
+    "organization_id": {
+      "type": "string",
+      "description": "Tenant (organization) this employee belongs to"
+    },
+    "user_id": {
+      "type": "string",
+      "description": "App user account this directory record mirrors"
+    },
+    "email": {
+      "type": "string"
+    },
+    "full_name": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string",
+      "default": "user"
+    },
+    "user_level": {
+      "type": "string"
+    },
+    "job_title": {
+      "type": "string"
+    },
+    "position": {
+      "type": "string"
+    },
+    "team": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "address": {
+      "type": "string"
+    },
+    "employment_type": {
+      "type": "string"
+    },
+    "contract_type": {
+      "type": "string"
+    },
+    "ird_number": {
+      "type": "string"
+    },
+    "hourly_rate": {
+      "type": "number"
+    },
+    "overtime_multiplier": {
+      "type": "number"
+    },
+    "skills": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "emergency_contact_name": {
+      "type": "string"
+    },
+    "emergency_contact_phone": {
+      "type": "string"
+    },
+    "emergency_contact_relationship": {
+      "type": "string"
+    },
+    "photos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "custom_fields": {
+      "type": "object"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "organization_id",
+    "email",
+    "full_name"
+  ],
+  "rls": {
+    "read": {
+      "data.organization_id": "{{user.data.organization_id}}"
+    },
+    "create": {
+      "$and": [
+        {
+          "data.organization_id": "{{user.data.organization_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "data.email": "{{user.email}}"
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$and": [
+        {
+          "data.organization_id": "{{user.data.organization_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "data.email": "{{user.email}}"
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$and": [
+        {
+          "data.organization_id": "{{user.data.organization_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

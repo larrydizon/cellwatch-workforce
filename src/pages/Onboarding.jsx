@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Briefcase } from 'lucide-react';
+import { syncEmployeeRecord } from '@/lib/employeeDirectory';
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -34,6 +35,7 @@ export default function Onboarding() {
               user_level: pending.user_level || '',
             });
           }
+          await syncEmployeeRecord(await base44.auth.me(), org.id);
           navigate('/', { replace: true });
           return;
         }
@@ -60,6 +62,7 @@ export default function Onboarding() {
         trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
       });
       await base44.auth.updateMe({ organization_id: org.id });
+      await syncEmployeeRecord(await base44.auth.me(), org.id);
       toast.success('Organization created');
       navigate('/', { replace: true });
     } catch (e) {

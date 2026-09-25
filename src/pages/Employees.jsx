@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, Phone, Mail, UserPlus, ClipboardList, LayoutDashboard, Briefcase, User as UserIcon, SlidersHorizontal, ShieldCheck, LogOut } from 'lucide-react';
+import { Search, Phone, Mail, UserPlus, ClipboardList, LayoutDashboard, Briefcase, User as UserIcon, SlidersHorizontal, ShieldCheck } from 'lucide-react';
 import { useOutletContext } from 'react-router-dom';
 import EmployeeFormsModal from '@/components/employees/EmployeeFormsModal';
 import EmployeeDashboardModal from '@/components/employees/EmployeeDashboardModal';
@@ -43,9 +43,10 @@ export default function Employees() {
   const [assigningJobs, setAssigningJobs] = useState(null);
   const [viewingProfile, setViewingProfile] = useState(null);
 
-  const { data: users = [], isLoading, isError } = useQuery({
-    queryKey: ['employees'],
-    queryFn: () => base44.entities.User.list('full_name', 200),
+  const { data: employees = [], isLoading, isError } = useQuery({
+    queryKey: ['employees', user?.organization_id],
+    queryFn: () => base44.entities.Employee.filter({ organization_id: user.organization_id }, 'full_name', 200),
+    enabled: !!user?.organization_id,
   });
 
   const { data: levels = [] } = useQuery({
@@ -56,8 +57,9 @@ export default function Employees() {
 
   const isAdmin = isAdminUser(user, levels);
 
-  // Only show employees belonging to the current organization
-  const orgUsers = users.filter(u => u.organization_id === user?.organization_id);
+  // Directory records are read from the app's own entity so every admin can see
+  // the team; id points at the linked user account for profile editing
+  const orgUsers = employees.map(e => ({ ...e, id: e.user_id || e.id }));
 
   const filtered = orgUsers.filter(u =>
     u.full_name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -137,22 +139,13 @@ export default function Employees() {
           <p className="text-sm text-muted-foreground">
             {search
               ? 'No one matches your search.'
-              : 'Your team list could not be loaded for this login.'}
+              : 'Add your first employee to build the team directory.'}
           </p>
-          {!search && user?.role !== 'admin' && (
-            <p className="text-sm text-muted-foreground">
-              This login does not have full administrator access yet. Sign out and back in, or ask the
-              company owner to set your role to Admin under App Users.
-            </p>
-          )}
           {!search && (
-            <Button variant="outline" className="gap-2" onClick={() => base44.auth.logout()}>
-              <LogOut className="h-4 w-4" /> Sign out and back in
+            <Button className="gap-2" onClick={() => setInviteOpen(true)}>
+              <UserPlus className="h-4 w-4" /> Add Employee
             </Button>
           )}
-          <p className="text-xs text-muted-foreground pt-1">
-            {user?.email} · role: {user?.role || 'none'} · {userLevelLabel(user, levels)}
-          </p>
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">

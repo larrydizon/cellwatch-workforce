@@ -11,6 +11,7 @@ import { Save, Mail, Shield, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { POSITIONS } from '@/components/forms/IndustryTemplates';
 import { CONTRACT_TYPES, userLevelLabel, buildProfileForm, buildProfilePayload, isAdminUser } from '@/lib/employeeProfile';
+import { syncEmployeeRecord } from '@/lib/employeeDirectory';
 import ProfileSection from './ProfileSection';
 import ProfilePhotoSection from './ProfilePhotoSection';
 import CustomFieldsSection from './CustomFieldsSection';
@@ -50,15 +51,15 @@ export default function EmployeeProfileForm({ targetUser, viewer, onSaved }) {
     try {
       const payload = buildProfilePayload(form, { userLevel: canEditAdminFields, pay: canEditPayFields });
       const level = levels.find(l => l.value === form.user_level);
+      // Administrator access follows the chosen user level
+      const roleChange = canEditAdminFields && level ? { role: level.is_admin ? 'admin' : 'user' } : {};
       if (isSelf) {
         await base44.auth.updateMe(payload);
       } else {
-        await base44.entities.User.update(targetUser.id, {
-          ...payload,
-          // Administrator access follows the chosen user level
-          ...(canEditAdminFields && level ? { role: level.is_admin ? 'admin' : 'user' } : {}),
-        });
+        await base44.entities.User.update(targetUser.id, { ...payload, ...roleChange });
       }
+      // Keep the directory record in step with the profile
+      await syncEmployeeRecord({ ...targetUser, ...payload, ...roleChange }, viewer?.organization_id);
       queryClient.invalidateQueries({ queryKey: ['employees'] });
       queryClient.invalidateQueries({ queryKey: ['all-users'] });
       toast.success('Profile saved');
