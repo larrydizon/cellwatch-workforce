@@ -58,6 +58,10 @@
         "type": "object"
       },
       "description": "Invited employees and the profile details to apply when they join"
+    },
+    "employee_delete_pin": {
+      "type": "string",
+      "description": "4-digit admin code required to remove an employee from the team directory"
     }
   },
   "required": [

@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, Phone, Mail, UserPlus, ClipboardList, LayoutDashboard, Briefcase, User as UserIcon, SlidersHorizontal, ShieldCheck } from 'lucide-react';
+import { Search, Phone, Mail, UserPlus, ClipboardList, LayoutDashboard, Briefcase, User as UserIcon, SlidersHorizontal, ShieldCheck, Trash2 } from 'lucide-react';
 import { useOutletContext } from 'react-router-dom';
 import EmployeeFormsModal from '@/components/employees/EmployeeFormsModal';
 import EmployeeDashboardModal from '@/components/employees/EmployeeDashboardModal';
@@ -13,6 +13,7 @@ import EmployeeProfileModal from '@/components/employees/EmployeeProfileModal';
 import InviteEmployeeModal from '@/components/employees/InviteEmployeeModal';
 import ProfileFieldsModal from '@/components/employees/ProfileFieldsModal';
 import UserLevelsModal from '@/components/employees/UserLevelsModal';
+import RemoveEmployeeModal from '@/components/employees/RemoveEmployeeModal';
 import { userLevelLabel, isAdminUser } from '@/lib/employeeProfile';
 
 const roleBadgeColors = {
@@ -42,6 +43,7 @@ export default function Employees() {
   const [viewingDashboard, setViewingDashboard] = useState(null);
   const [assigningJobs, setAssigningJobs] = useState(null);
   const [viewingProfile, setViewingProfile] = useState(null);
+  const [removingEmployee, setRemovingEmployee] = useState(null);
 
   const { data: employees = [], isLoading, isError } = useQuery({
     queryKey: ['employees', user?.organization_id],
@@ -59,7 +61,7 @@ export default function Employees() {
 
   // Directory records are read from the app's own entity so every admin can see
   // the team; id points at the linked user account for profile editing
-  const orgUsers = employees.map(e => ({ ...e, id: e.user_id || e.id }));
+  const orgUsers = employees.map(e => ({ ...e, id: e.user_id || e.id, directory_id: e.id }));
 
   const filtered = orgUsers.filter(u =>
     u.full_name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -227,6 +229,16 @@ export default function Employees() {
                   >
                     <Briefcase className="h-3.5 w-3.5" /> Assign Job
                   </Button>
+                  {isAdmin && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="col-span-2 gap-1.5 text-destructive hover:text-destructive"
+                      onClick={() => setRemovingEmployee(emp)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" /> Remove Employee
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
@@ -282,6 +294,15 @@ export default function Employees() {
           viewer={user}
           open={!!viewingProfile}
           onOpenChange={(v) => { if (!v) setViewingProfile(null); }}
+        />
+      )}
+
+      {removingEmployee && (
+        <RemoveEmployeeModal
+          employee={removingEmployee}
+          organizationId={user?.organization_id}
+          open={!!removingEmployee}
+          onOpenChange={(v) => { if (!v) setRemovingEmployee(null); }}
         />
       )}
     </div>
