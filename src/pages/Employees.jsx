@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, Phone, Mail, UserPlus, ClipboardList, LayoutDashboard, Briefcase, User as UserIcon, SlidersHorizontal, ShieldCheck } from 'lucide-react';
+import { Search, Phone, Mail, UserPlus, ClipboardList, LayoutDashboard, Briefcase, User as UserIcon, SlidersHorizontal, ShieldCheck, LogOut } from 'lucide-react';
 import { useOutletContext } from 'react-router-dom';
 import EmployeeFormsModal from '@/components/employees/EmployeeFormsModal';
 import EmployeeDashboardModal from '@/components/employees/EmployeeDashboardModal';
@@ -44,8 +44,9 @@ export default function Employees() {
   const [viewingProfile, setViewingProfile] = useState(null);
 
   const { data: users = [], isLoading, isError } = useQuery({
-    queryKey: ['employees'],
-    queryFn: () => base44.entities.User.list('full_name', 200),
+    queryKey: ['employees', user?.organization_id],
+    queryFn: () => base44.entities.User.filter({ organization_id: user.organization_id }, 'full_name', 200),
+    enabled: !!user?.organization_id,
   });
 
   const { data: levels = [] } = useQuery({
@@ -128,14 +129,19 @@ export default function Employees() {
           ))}
         </div>
       ) : isError || filtered.length === 0 ? (
-        <div className="max-w-md mx-auto text-center py-16 space-y-2">
+        <div className="max-w-md mx-auto text-center py-16 space-y-3">
           <UserIcon className="h-8 w-8 mx-auto text-muted-foreground" />
           <p className="font-semibold">No employees to show</p>
           <p className="text-sm text-muted-foreground">
             {search
               ? 'No one matches your search.'
-              : 'Your team list could not be loaded. Sign out and sign back in, then try again.'}
+              : 'Your team list could not be loaded. Signing out and back in refreshes your access.'}
           </p>
+          {!search && (
+            <Button variant="outline" className="gap-2" onClick={() => base44.auth.logout()}>
+              <LogOut className="h-4 w-4" /> Sign out and back in
+            </Button>
+          )}
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
