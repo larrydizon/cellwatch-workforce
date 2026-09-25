@@ -43,7 +43,7 @@ export default function Employees() {
   const [assigningJobs, setAssigningJobs] = useState(null);
   const [viewingProfile, setViewingProfile] = useState(null);
 
-  const { data: users = [], isLoading } = useQuery({
+  const { data: users = [], isLoading, isError } = useQuery({
     queryKey: ['employees'],
     queryFn: () => base44.entities.User.list('full_name', 200),
   });
@@ -126,6 +126,16 @@ export default function Employees() {
               </div>
             </div>
           ))}
+        </div>
+      ) : isError || filtered.length === 0 ? (
+        <div className="max-w-md mx-auto text-center py-16 space-y-2">
+          <UserIcon className="h-8 w-8 mx-auto text-muted-foreground" />
+          <p className="font-semibold">No employees to show</p>
+          <p className="text-sm text-muted-foreground">
+            {search
+              ? 'No one matches your search.'
+              : 'Your team list could not be loaded. Sign out and sign back in, then try again.'}
+          </p>
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
