@@ -51,9 +51,17 @@ export async function upsertDirectoryRecord(organizationId, email, fields = {}) 
   return base44.entities.Employee.create({ full_name: key, ...payload });
 }
 
-export async function syncEmployeeRecord(user, organizationId) {
+// userId: the linked user account id. Pass null for directory-only records
+// (people who have been added but not signed up yet).
+export async function syncEmployeeRecord(user, organizationId, userId) {
   const record = employeeRecordFromUser(user, organizationId);
   if (!record?.organization_id || !record.email) return null;
   const { organization_id, email, ...fields } = record;
+  const accountId = userId === null ? null : (userId || user.id);
+  if (accountId) {
+    fields.user_id = accountId;
+  } else {
+    delete fields.user_id;
+  }
   return upsertDirectoryRecord(organization_id, email, fields);
 }
