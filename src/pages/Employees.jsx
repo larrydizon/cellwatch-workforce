@@ -44,9 +44,8 @@ export default function Employees() {
   const [viewingProfile, setViewingProfile] = useState(null);
 
   const { data: users = [], isLoading, isError } = useQuery({
-    queryKey: ['employees', user?.organization_id],
-    queryFn: () => base44.entities.User.filter({ organization_id: user.organization_id }, 'full_name', 200),
-    enabled: !!user?.organization_id,
+    queryKey: ['employees'],
+    queryFn: () => base44.entities.User.list('full_name', 200),
   });
 
   const { data: levels = [] } = useQuery({
@@ -73,6 +72,9 @@ export default function Employees() {
         <p className="font-semibold">Access restricted</p>
         <p className="text-sm text-muted-foreground">
           Only administrators and the company owner can view the employee directory.
+        </p>
+        <p className="text-xs text-muted-foreground pt-2">
+          Signed in as {user.email} · {userLevelLabel(user, levels)}
         </p>
       </div>
     );
@@ -142,6 +144,9 @@ export default function Employees() {
               <LogOut className="h-4 w-4" /> Sign out and back in
             </Button>
           )}
+          <p className="text-xs text-muted-foreground pt-1">
+            Signed in as {user?.email} · {userLevelLabel(user, levels)}
+          </p>
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
