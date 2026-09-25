@@ -13,13 +13,12 @@ export default function JobDetailModal({ job, open, onOpenChange, canAssign }) {
   const queryClient = useQueryClient();
   const [assigned, setAssigned] = useState([]);
 
-  const { data: users = [] } = useQuery({
-    queryKey: ['employees'],
-    queryFn: () => base44.entities.User.list('full_name', 200),
+  // Read the team directory so employees who have been added but not signed in yet are listed too
+  const { data: employees = [] } = useQuery({
+    queryKey: ['employees', user?.organization_id],
+    queryFn: () => base44.entities.Employee.filter({ organization_id: user.organization_id }, 'full_name', 200),
     enabled: !!user?.organization_id && canAssign,
   });
-
-  const employees = users.filter(u => u.organization_id === user?.organization_id);
 
   useEffect(() => {
     if (open && job) setAssigned(job.assigned_workers || []);
