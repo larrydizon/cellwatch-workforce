@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import useShiftReminders from '@/hooks/useShiftReminders';
 import useAutoClockOut from '@/hooks/useAutoClockOut';
+import useOvertimePrompt from '@/hooks/useOvertimePrompt';
+import OvertimePromptModal from '@/components/timeclock/OvertimePromptModal';
 
 const mobileNavItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
@@ -54,6 +56,7 @@ export default function AppLayout() {
 
   useShiftReminders(user);
   useAutoClockOut(user);
+  const overtimeEntry = useOvertimePrompt(user);
 
   const { data: levels = [] } = useQuery({
     queryKey: ['user-levels', user?.organization_id],
@@ -121,6 +124,8 @@ export default function AppLayout() {
       </div>
 
       <MobileNav />
+
+      <OvertimePromptModal entry={overtimeEntry} />
     </div>
   );
 }

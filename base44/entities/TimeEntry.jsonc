@@ -77,6 +77,21 @@
     "is_overtime": {
       "type": "boolean",
       "default": false
+    },
+    "overtime_hours": {
+      "type": "number",
+      "default": 0,
+      "description": "Extra hours the employee agreed to work before auto clock-out"
+    },
+    "overtime_decision": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "declined"
+      ],
+      "default": "pending",
+      "description": "Employee answer to the shift-limit overtime reminder"
     }
   },
   "required": [

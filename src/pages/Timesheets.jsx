@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Check, X, Clock, Download, FileText, DollarSign } from 'lucide-react';
+import { Check, X, Clock, Download, FileText, DollarSign, Pencil } from 'lucide-react';
 import moment from 'moment';
 import { toast } from 'sonner';
 import { exportPayrollCSV } from '@/lib/payrollExport';
+import AdjustTimeEntryModal from '@/components/timesheets/AdjustTimeEntryModal';
 
 const statusBadge = {
   active: "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -24,6 +25,7 @@ export default function Timesheets() {
   const { user } = useOutletContext();
   const [filter, setFilter] = useState('all');
   const [exportingPayroll, setExportingPayroll] = useState(false);
+  const [adjusting, setAdjusting] = useState(null);
   const queryClient = useQueryClient();
 
   const isAdmin = ['admin', 'operations_manager', 'supervisor'].includes(user?.role);
@@ -172,6 +174,9 @@ export default function Timesheets() {
                       </Badge>
                       {isAdmin && entry.status === 'pending_approval' && (
                         <div className="flex gap-1 ml-1">
+                          <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="Adjust hours" onClick={() => setAdjusting(entry)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
                           <Button size="icon" variant="ghost" className="h-8 w-8 text-success hover:text-success hover:bg-success/10" onClick={() => approveMutation.mutate(entry.id)}>
                             <Check className="h-4 w-4" />
                           </Button>
@@ -197,6 +202,12 @@ export default function Timesheets() {
           </div>
         )}
       </div>
+
+      <AdjustTimeEntryModal
+        entry={adjusting}
+        open={!!adjusting}
+        onOpenChange={(open) => !open && setAdjusting(null)}
+      />
     </div>
   );
 }
