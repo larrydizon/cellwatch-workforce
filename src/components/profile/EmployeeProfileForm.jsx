@@ -209,7 +209,7 @@ export default function EmployeeProfileForm({ targetUser, viewer, onSaved }) {
         fields={customFields}
         values={form.customFields}
         onChange={setCustomField}
-        canEditAdminFields={canEditAdminFields}
+        canEditAdminFields={canEditPayFields}
       />
 
       <ProfilePhotoSection photos={form.photos} onChange={(photos) => set('photos', photos)} />
