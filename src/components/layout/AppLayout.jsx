@@ -14,6 +14,7 @@ import {
   FileText, MessageSquare, Settings, Bell, UmbrellaOff, LayoutGrid, ClipboardList, CreditCard, User as UserIcon
 } from 'lucide-react';
 import useShiftReminders from '@/hooks/useShiftReminders';
+import useAutoClockOut from '@/hooks/useAutoClockOut';
 
 const mobileNavItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
@@ -52,6 +53,7 @@ export default function AppLayout() {
   }, [user]);
 
   useShiftReminders(user);
+  useAutoClockOut(user);
 
   const { data: levels = [] } = useQuery({
     queryKey: ['user-levels', user?.organization_id],
