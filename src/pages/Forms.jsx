@@ -9,24 +9,9 @@ import { toast } from 'sonner';
 import FormBuilderModal from '@/components/forms/FormBuilderModal';
 import FormSubmissionsModal from '@/components/forms/FormSubmissionsModal';
 import AssignFormModal from '@/components/forms/AssignFormModal';
-
-const typeLabels = {
-  prestart: 'Pre-Start',
-  health_safety: 'Health & Safety',
-  incident: 'Incident Report',
-  hazard: 'Hazard ID',
-  induction: 'Induction',
-  other: 'Other',
-};
-
-const typeColors = {
-  prestart: 'bg-blue-50 text-blue-700 border-blue-200',
-  health_safety: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  incident: 'bg-red-50 text-red-700 border-red-200',
-  hazard: 'bg-amber-50 text-amber-700 border-amber-200',
-  induction: 'bg-violet-50 text-violet-700 border-violet-200',
-  other: 'bg-slate-50 text-slate-700 border-slate-200',
-};
+import FormListItem from '@/components/forms/FormListItem';
+import ViewToggle from '@/components/common/ViewToggle';
+import { typeLabels, typeColors } from '@/lib/formTypes';
 
 export default function Forms() {
   const { user } = useOutletContext();
@@ -36,6 +21,7 @@ export default function Forms() {
   const [editingForm, setEditingForm] = useState(null);
   const [viewingSubmissions, setViewingSubmissions] = useState(null);
   const [assignOpen, setAssignOpen] = useState(false);
+  const [view, setView] = useState('grid');
 
   const { data: forms = [], isLoading } = useQuery({
     queryKey: ['form-templates'],
@@ -87,7 +73,8 @@ export default function Forms() {
           <h1 className="text-2xl font-bold tracking-tight">Forms</h1>
           <p className="text-sm text-muted-foreground mt-1">Build and manage prestart, H&S and other forms</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          <ViewToggle view={view} onChange={setView} />
           <Button onClick={() => setAssignOpen(true)} variant="outline" className="gap-2">
             <Send className="h-4 w-4" /> Assign Form
           </Button>
@@ -112,7 +99,7 @@ export default function Forms() {
             <Plus className="h-4 w-4" /> New Form
           </Button>
         </div>
-      ) : (
+      ) : view === 'grid' ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {forms.map((form) => (
             <div key={form.id} className="bg-card rounded-xl border border-border p-5 space-y-4 hover:shadow-md transition-shadow">
@@ -183,6 +170,20 @@ export default function Forms() {
                 </Button>
               </div>
             </div>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {forms.map((form) => (
+            <FormListItem
+              key={form.id}
+              form={form}
+              onEdit={handleEdit}
+              onResponses={setViewingSubmissions}
+              onDelete={(f) => { if (confirm('Delete this form?')) deleteMutation.mutate(f.id); }}
+              onToggleActive={(f) => toggleActiveMutation.mutate({ id: f.id, is_active: !f.is_active })}
+              onToggleClockIn={(f) => toggleClockInMutation.mutate({ id: f.id, require_before_clockin: !f.require_before_clockin })}
+            />
           ))}
         </div>
       )}

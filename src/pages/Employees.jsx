@@ -3,9 +3,11 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Search, Phone, Mail, UserPlus, ClipboardList, LayoutDashboard, Briefcase, User as UserIcon, SlidersHorizontal, ShieldCheck, Trash2 } from 'lucide-react';
+import { Search, UserPlus, User as UserIcon, SlidersHorizontal, ShieldCheck } from 'lucide-react';
 import { useOutletContext } from 'react-router-dom';
+import EmployeeCard from '@/components/employees/EmployeeCard';
+import EmployeeListItem from '@/components/employees/EmployeeListItem';
+import ViewToggle from '@/components/common/ViewToggle';
 import EmployeeFormsModal from '@/components/employees/EmployeeFormsModal';
 import EmployeeDashboardModal from '@/components/employees/EmployeeDashboardModal';
 import AssignJobModal from '@/components/employees/AssignJobModal';
@@ -15,23 +17,6 @@ import ProfileFieldsModal from '@/components/employees/ProfileFieldsModal';
 import UserLevelsModal from '@/components/employees/UserLevelsModal';
 import RemoveEmployeeModal from '@/components/employees/RemoveEmployeeModal';
 import { userLevelLabel, isAdminUser } from '@/lib/employeeProfile';
-
-const roleBadgeColors = {
-  admin: "bg-red-50 text-red-700 border-red-200",
-  user: "bg-slate-50 text-slate-700 border-slate-200",
-  operations_manager: "bg-violet-50 text-violet-700 border-violet-200",
-  supervisor: "bg-blue-50 text-blue-700 border-blue-200",
-  technician: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  casual_worker: "bg-amber-50 text-amber-700 border-amber-200",
-  client_viewer: "bg-slate-50 text-slate-700 border-slate-200",
-};
-
-const empTypeLabels = {
-  full_time: 'Full Time',
-  part_time: 'Part Time',
-  casual: 'Casual',
-  subcontractor: 'Subcontractor',
-};
 
 export default function Employees() {
   const { user } = useOutletContext();
@@ -44,6 +29,7 @@ export default function Employees() {
   const [assigningJobs, setAssigningJobs] = useState(null);
   const [viewingProfile, setViewingProfile] = useState(null);
   const [removingEmployee, setRemovingEmployee] = useState(null);
+  const [view, setView] = useState('grid');
 
   const { data: employees = [], isLoading, isError } = useQuery({
     queryKey: ['employees', user?.organization_id],
@@ -92,6 +78,7 @@ export default function Employees() {
           <p className="text-sm text-muted-foreground mt-1">{orgUsers.length} team members</p>
         </div>
         <div className="flex items-center gap-2">
+          <ViewToggle view={view} onChange={setView} />
           {isAdmin && (
             <>
               <Button variant="outline" onClick={() => setLevelsOpen(true)} className="gap-2">
@@ -149,97 +136,36 @@ export default function Employees() {
             </Button>
           )}
         </div>
-      ) : (
+      ) : view === 'grid' ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((emp) => (
-            <div key={emp.id} className="bg-card rounded-xl border border-border p-5 hover:shadow-md transition-shadow">
-              <div className="flex items-start gap-3">
-                <div className="h-11 w-11 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                  {emp.photos?.[0] ? (
-                    <img src={emp.photos[0]} alt={emp.full_name} className="h-full w-full object-cover" />
-                  ) : (
-                    <span className="text-primary font-semibold text-sm">
-                      {emp.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || '?'}
-                    </span>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm truncate">{emp.full_name || 'Unknown'}</p>
-                  <p className="text-xs text-muted-foreground truncate">{emp.job_title || 'No title set'}</p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Badge variant="outline" className={roleBadgeColors[emp.role] || ""}>
-                      {userLevelLabel(emp, levels)}
-                    </Badge>
-                    {emp.employment_type && (
-                      <Badge variant="outline" className="text-xs">
-                        {empTypeLabels[emp.employment_type] || emp.employment_type}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <div className="mt-4 pt-3 border-t border-border space-y-1.5">
-                {emp.email && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Mail className="h-3 w-3" /> <span className="truncate">{emp.email}</span>
-                  </div>
-                )}
-                {emp.phone && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Phone className="h-3 w-3" /> {emp.phone}
-                  </div>
-                )}
-                {emp.team && (
-                  <p className="text-xs text-muted-foreground">Team: {emp.team}</p>
-                )}
-              </div>
-              {emp.email && (
-                <div className="grid grid-cols-2 gap-2 mt-3">
-                  <Button
-                    variant="default"
-                    size="sm"
-                    className="gap-1.5"
-                    onClick={() => setViewingDashboard(emp)}
-                  >
-                    <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5"
-                    onClick={() => setViewingProfile(emp)}
-                  >
-                    <UserIcon className="h-3.5 w-3.5" /> Profile
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5"
-                    onClick={() => setViewingEmployee(emp)}
-                  >
-                    <ClipboardList className="h-3.5 w-3.5" /> Forms
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="col-span-2 gap-1.5"
-                    onClick={() => setAssigningJobs(emp)}
-                  >
-                    <Briefcase className="h-3.5 w-3.5" /> Assign Job
-                  </Button>
-                  {isAdmin && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="col-span-2 gap-1.5 text-destructive hover:text-destructive"
-                      onClick={() => setRemovingEmployee(emp)}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" /> Remove Employee
-                    </Button>
-                  )}
-                </div>
-              )}
-            </div>
+            <EmployeeCard
+              key={emp.id}
+              emp={emp}
+              levels={levels}
+              isAdmin={isAdmin}
+              onDashboard={setViewingDashboard}
+              onProfile={setViewingProfile}
+              onForms={setViewingEmployee}
+              onAssignJob={setAssigningJobs}
+              onRemove={setRemovingEmployee}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((emp) => (
+            <EmployeeListItem
+              key={emp.id}
+              emp={emp}
+              levels={levels}
+              isAdmin={isAdmin}
+              onDashboard={setViewingDashboard}
+              onProfile={setViewingProfile}
+              onForms={setViewingEmployee}
+              onAssignJob={setAssigningJobs}
+              onRemove={setRemovingEmployee}
+            />
           ))}
         </div>
       )}
