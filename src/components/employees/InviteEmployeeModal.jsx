@@ -35,25 +35,28 @@ export default function InviteEmployeeModal({ open, onOpenChange, organizationId
   const set = (key, value) => setForm(f => ({ ...f, [key]: value }));
 
   const handleInvite = async () => {
-    const email = form.email.trim();
+    const email = form.email.trim().toLowerCase();
     if (!email) return;
     setSending(true);
     try {
       const level = levels.find(l => l.value === form.user_level);
       const appRole = level?.is_admin ? 'admin' : 'user';
-      await base44.users.inviteUser(email, appRole);
-
       const details = {
         phone: form.phone,
         position: form.position,
         job_title: form.job_title,
       };
 
-      const users = await base44.entities.User.list('-created_date', 200);
-      const existing = users.find(u => u.email?.toLowerCase() === email.toLowerCase());
+      // Already registered? Then apply the details to their account too
+      let existing = null;
+      try {
+        const users = await base44.entities.User.list('-created_date', 200);
+        existing = users.find(u => u.email?.toLowerCase() === email) || null;
+      } catch {
+        existing = null;
+      }
 
       if (existing) {
-        // Already registered — apply the details straight away
         await base44.entities.User.update(existing.id, {
           ...details,
           organization_id: organizationId,
@@ -61,31 +64,45 @@ export default function InviteEmployeeModal({ open, onOpenChange, organizationId
           user_level: form.user_level,
           ...(form.full_name ? { full_name: form.full_name } : {}),
         });
-      } else {
+      }
+
+      // Add them to the team directory first, so they show up even if the invite cannot be sent
+      await upsertDirectoryRecord(organizationId, email, {
+        ...details,
+        full_name: form.full_name || existing?.full_name || email,
+        role: appRole,
+        user_level: form.user_level,
+        ...(existing ? { user_id: existing.id } : {}),
+      });
+
+      if (!existing) {
         // Keep the details on the organization so they're applied when they accept
         const org = await base44.entities.Organization.get(organizationId);
-        const pending = (org.pending_invites || []).filter(p => p.email?.toLowerCase() !== email.toLowerCase());
+        const pending = (org.pending_invites || []).filter(p => p.email?.toLowerCase() !== email);
         await base44.entities.Organization.update(org.id, {
           member_emails: [...new Set([...(org.member_emails || []), email])],
           pending_invites: [...pending, { email, full_name: form.full_name, role: appRole, user_level: form.user_level, ...details }],
         });
       }
 
-      // Show them in the team directory straight away
-      await upsertDirectoryRecord(organizationId, email, {
-        ...details,
-        full_name: form.full_name || email,
-        role: appRole,
-        user_level: form.user_level,
-        ...(existing ? { user_id: existing.id } : {}),
-      });
+      // Send the login invite last
+      let inviteSent = true;
+      try {
+        await base44.users.inviteUser(email, appRole);
+      } catch {
+        inviteSent = false;
+      }
 
       queryClient.invalidateQueries({ queryKey: ['employees'] });
-      toast.success(`Invitation sent to ${email}`);
+      if (inviteSent) {
+        toast.success(`Invitation sent to ${email}`);
+      } else {
+        toast.warning(`${email} was added to the team, but no new invite was sent — they may already have one.`);
+      }
       setForm(EMPTY);
       onOpenChange(false);
     } catch {
-      toast.error('Could not send the invitation');
+      toast.error('Could not add this employee');
     }
     setSending(false);
   };
