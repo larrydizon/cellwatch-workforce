@@ -201,14 +201,16 @@ export default function Employees() {
                   >
                     <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5"
-                    onClick={() => setViewingProfile(emp)}
-                  >
-                    <UserIcon className="h-3.5 w-3.5" /> Profile
-                  </Button>
+                  {emp.user_id && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={() => setViewingProfile(emp)}
+                    >
+                      <UserIcon className="h-3.5 w-3.5" /> Profile
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     size="sm"

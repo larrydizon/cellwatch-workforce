@@ -33,18 +33,27 @@ export function employeeRecordFromUser(user, organizationId) {
   };
 }
 
-export async function syncEmployeeRecord(user, organizationId) {
-  const record = employeeRecordFromUser(user, organizationId);
-  if (!record?.organization_id || !record.email) return null;
+// Create the directory entry if it is missing, otherwise update it in place
+export async function upsertDirectoryRecord(organizationId, email, fields = {}) {
+  if (!organizationId || !email) return null;
+  const key = email.toLowerCase();
 
   const existing = await base44.entities.Employee.filter(
-    { organization_id: record.organization_id, email: record.email },
+    { organization_id: organizationId, email: key },
     '-created_date',
     1
   );
 
+  const payload = { organization_id: organizationId, email: key, ...fields };
   if (existing.length) {
-    return base44.entities.Employee.update(existing[0].id, record);
+    return base44.entities.Employee.update(existing[0].id, payload);
   }
-  return base44.entities.Employee.create(record);
+  return base44.entities.Employee.create({ full_name: key, ...payload });
+}
+
+export async function syncEmployeeRecord(user, organizationId) {
+  const record = employeeRecordFromUser(user, organizationId);
+  if (!record?.organization_id || !record.email) return null;
+  const { organization_id, email, ...fields } = record;
+  return upsertDirectoryRecord(organization_id, email, fields);
 }

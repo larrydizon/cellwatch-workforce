@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { POSITIONS } from '@/components/forms/IndustryTemplates';
+import { upsertDirectoryRecord } from '@/lib/employeeDirectory';
 
 const EMPTY = { full_name: '', email: '', user_level: '', phone: '', position: '', job_title: '' };
 
@@ -69,6 +70,15 @@ export default function InviteEmployeeModal({ open, onOpenChange, organizationId
           pending_invites: [...pending, { email, full_name: form.full_name, role: appRole, user_level: form.user_level, ...details }],
         });
       }
+
+      // Show them in the team directory straight away
+      await upsertDirectoryRecord(organizationId, email, {
+        ...details,
+        full_name: form.full_name || email,
+        role: appRole,
+        user_level: form.user_level,
+        ...(existing ? { user_id: existing.id } : {}),
+      });
 
       queryClient.invalidateQueries({ queryKey: ['employees'] });
       toast.success(`Invitation sent to ${email}`);
