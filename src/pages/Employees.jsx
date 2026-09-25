@@ -137,15 +137,21 @@ export default function Employees() {
           <p className="text-sm text-muted-foreground">
             {search
               ? 'No one matches your search.'
-              : 'Your team list could not be loaded. Signing out and back in refreshes your access.'}
+              : 'Your team list could not be loaded for this login.'}
           </p>
+          {!search && user?.role !== 'admin' && (
+            <p className="text-sm text-muted-foreground">
+              This login does not have full administrator access yet. Sign out and back in, or ask the
+              company owner to set your role to Admin under App Users.
+            </p>
+          )}
           {!search && (
             <Button variant="outline" className="gap-2" onClick={() => base44.auth.logout()}>
               <LogOut className="h-4 w-4" /> Sign out and back in
             </Button>
           )}
           <p className="text-xs text-muted-foreground pt-1">
-            Signed in as {user?.email} · {userLevelLabel(user, levels)}
+            {user?.email} · role: {user?.role || 'none'} · {userLevelLabel(user, levels)}
           </p>
         </div>
       ) : (
