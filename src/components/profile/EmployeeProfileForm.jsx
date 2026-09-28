@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Save, Mail, Shield, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { POSITIONS } from '@/components/forms/IndustryTemplates';
@@ -174,6 +175,20 @@ export default function EmployeeProfileForm({ targetUser, viewer, onSaved }) {
             <Input type="number" step="0.1" value={form.overtime_multiplier} onChange={e => set('overtime_multiplier', e.target.value)} placeholder="1.5" disabled={!canEditPayFields} />
           </div>
         </div>
+        {canEditAdminFields && (
+          <div className="flex items-start justify-between gap-4 mt-4 pt-4 border-t border-border">
+            <div>
+              <Label>Daily report required</Label>
+              <p className="text-xs text-muted-foreground mt-1">
+                This employee must list the jobs and work done before they can clock out.
+              </p>
+            </div>
+            <Switch
+              checked={!!form.daily_report_required}
+              onCheckedChange={(v) => set('daily_report_required', v)}
+            />
+          </div>
+        )}
         {!canEditPayFields && (
           <p className="flex items-center gap-1.5 text-xs text-muted-foreground mt-4">
             <Lock className="h-3 w-3" /> Contract type, IRD number and pay rates are managed by an administrator.

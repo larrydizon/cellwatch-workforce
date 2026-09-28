@@ -20,6 +20,7 @@ import Settings from '@/pages/Settings';
 import Leave from '@/pages/Leave';
 import AdminOverview from '@/pages/AdminOverview';
 import Forms from '@/pages/Forms';
+import DailyReports from '@/pages/DailyReports';
 import MyForms from '@/pages/MyForms';
 import Onboarding from '@/pages/Onboarding';
 import Billing from '@/pages/Billing';
@@ -60,6 +61,7 @@ const AuthenticatedApp = () => {
         <Route path="/jobs" element={<Jobs />} />
         <Route path="/time-clock" element={<TimeClock />} />
         <Route path="/timesheets" element={<Timesheets />} />
+        <Route path="/daily-reports" element={<DailyReports />} />
         <Route path="/chat" element={<Chat />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/profile" element={<Profile />} />

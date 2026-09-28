@@ -80,6 +80,11 @@
     "is_active": {
       "type": "boolean",
       "default": true
+    },
+    "daily_report_required": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, this employee must file a job-by-job daily report when clocking out"
     }
   },
   "required": [

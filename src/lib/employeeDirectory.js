@@ -30,6 +30,7 @@ export function employeeRecordFromUser(user, organizationId) {
     emergency_contact_relationship: form.emergency_contact_relationship,
     photos: form.photos,
     custom_fields: form.customFields,
+    daily_report_required: form.daily_report_required,
   };
 }
 

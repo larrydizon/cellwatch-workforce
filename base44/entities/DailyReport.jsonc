@@ -1,0 +1,161 @@
+{
+  "name": "DailyReport",
+  "type": "object",
+  "properties": {
+    "organization_id": {
+      "type": "string",
+      "description": "Tenant (organization) this report belongs to"
+    },
+    "employee_email": {
+      "type": "string"
+    },
+    "employee_name": {
+      "type": "string"
+    },
+    "report_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Day the work was carried out"
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "Array of {job_id, job_title, work_done} \u2014 one line per job"
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "submitted_by": {
+      "type": "string",
+      "description": "Email of the person who filed the report"
+    },
+    "filed_by_admin": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when an administrator filed the report for the employee"
+    }
+  },
+  "required": [
+    "employee_email",
+    "report_date",
+    "entries"
+  ],
+  "rls": {
+    "read": {
+      "$and": [
+        {
+          "data.organization_id": "{{user.data.organization_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "operations_manager"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "supervisor"
+              }
+            },
+            {
+              "data.employee_email": "{{user.email}}"
+            }
+          ]
+        }
+      ]
+    },
+    "create": {
+      "$and": [
+        {
+          "data.organization_id": "{{user.data.organization_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "operations_manager"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "supervisor"
+              }
+            },
+            {
+              "data.employee_email": "{{user.email}}"
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$and": [
+        {
+          "data.organization_id": "{{user.data.organization_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "operations_manager"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "supervisor"
+              }
+            },
+            {
+              "data.employee_email": "{{user.email}}"
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$and": [
+        {
+          "data.organization_id": "{{user.data.organization_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "operations_manager"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "supervisor"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

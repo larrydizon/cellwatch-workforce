@@ -76,6 +76,7 @@ export function buildProfileForm(user) {
     customFields: user?.custom_fields || {},
     user_level: user?.user_level || '',
     role: user?.role || 'user',
+    daily_report_required: user?.daily_report_required ?? false,
   };
 }
 

@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import LocationMapLink from '@/components/timeclock/LocationMapLink';
 import PreStartFormModal from '@/components/forms/PreStartFormModal';
 import AdminClockPanel from '@/components/timeclock/AdminClockPanel';
+import DailyReportModal from '@/components/reports/DailyReportModal';
 
 const TRACKING_INTERVAL_KEY = 'location_tracking_interval_ms';
 
@@ -25,6 +26,7 @@ export default function TimeClock() {
   const [selectedJob, setSelectedJob] = useState('');
   const [location, setLocation] = useState(null);
   const [showPreStartForms, setShowPreStartForms] = useState(false);
+  const [showDailyReport, setShowDailyReport] = useState(false);
   const queryClient = useQueryClient();
   const trackingRef = useRef(null);
 
@@ -114,6 +116,35 @@ export default function TimeClock() {
     enabled: !!user?.email,
   });
 
+  // Daily report requirement set by an administrator for this employee
+  const { data: myDirectoryRecord } = useQuery({
+    queryKey: ['my-employee-record', user?.email],
+    queryFn: async () => {
+      const records = await base44.entities.Employee.filter(
+        { organization_id: user.organization_id, email: user.email },
+        '-created_date',
+        1
+      );
+      return records[0] || null;
+    },
+    enabled: !!user?.email && !!user?.organization_id,
+  });
+
+  const { data: todayReport } = useQuery({
+    queryKey: ['today-daily-report', user?.email],
+    queryFn: async () => {
+      const reports = await base44.entities.DailyReport.filter(
+        { employee_email: user.email, report_date: moment().format('YYYY-MM-DD') },
+        '-created_date',
+        1
+      );
+      return reports[0] || null;
+    },
+    enabled: !!user?.email,
+  });
+
+  const needsDailyReport = !!myDirectoryRecord?.daily_report_required && !todayReport;
+
   const clockInMutation = useMutation({
     mutationFn: async () => {
       const job = jobs.find(j => j.id === selectedJob);
@@ -200,6 +231,15 @@ export default function TimeClock() {
       return;
     }
     clockInMutation.mutate();
+  };
+
+  // A required daily report is captured before the shift is closed
+  const handleClockOutClick = () => {
+    if (needsDailyReport) {
+      setShowDailyReport(true);
+      return;
+    }
+    clockOutMutation.mutate();
   };
 
   const isOnBreak = activeEntry?.break_start && !activeEntry?.break_end;
@@ -314,13 +354,18 @@ export default function TimeClock() {
               {isOnBreak ? 'End Break' : 'Start Break'}
             </Button>
             <Button
-              onClick={() => clockOutMutation.mutate()}
+              onClick={handleClockOutClick}
               disabled={clockOutMutation.isPending}
               className="h-14 gap-2 rounded-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground"
             >
               <LogOut className="h-5 w-5" /> Clock Out
             </Button>
           </div>
+        )}
+        {activeEntry && needsDailyReport && (
+          <p className="text-center text-xs text-muted-foreground">
+            A daily report of today's work is required before you clock out.
+          </p>
         )}
       </div>
 
@@ -372,6 +417,22 @@ export default function TimeClock() {
           open={showPreStartForms}
           onOpenChange={setShowPreStartForms}
           onAllCompleted={completePreStartCheck}
+        />
+      )}
+
+      {showDailyReport && (
+        <DailyReportModal
+          open={showDailyReport}
+          onOpenChange={setShowDailyReport}
+          employee={{ email: user.email, full_name: user.full_name }}
+          organizationId={user.organization_id}
+          filedBy={user.email}
+          note="Required before you clock out — list each job and the work completed."
+          defaultJob={activeEntry?.job_id ? { id: activeEntry.job_id, title: activeEntry.job_title } : null}
+          onSubmitted={() => {
+            setShowDailyReport(false);
+            clockOutMutation.mutate();
+          }}
         />
       )}
     </div>
