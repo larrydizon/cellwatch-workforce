@@ -1,11 +1,17 @@
 import React, { useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Shield, MapPin, Bell, Clock, Users } from 'lucide-react';
-
-const TRACKING_INTERVAL_KEY = 'location_tracking_interval_ms';
+import { Shield, MapPin, Bell, Clock } from 'lucide-react';
+import { toast } from 'sonner';
+import { saveOrgSettings } from '@/lib/orgSettings';
+import { logAudit } from '@/lib/auditLog';
+import { isAdminUser } from '@/lib/employeeProfile';
+import useOrganization from '@/hooks/useOrganization';
 
 const INTERVAL_OPTIONS = [
   { label: 'Disabled', value: '0' },
@@ -18,20 +24,61 @@ const INTERVAL_OPTIONS = [
 ];
 
 export default function Settings() {
-  const [trackingInterval, setTrackingInterval] = useState(
-    () => localStorage.getItem(TRACKING_INTERVAL_KEY) || '0'
-  );
+  const { user } = useOutletContext();
+  const queryClient = useQueryClient();
+  const orgState = useOrganization(user);
+  const [saving, setSaving] = useState(null);
 
-  const handleIntervalChange = (val) => {
-    setTrackingInterval(val);
-    localStorage.setItem(TRACKING_INTERVAL_KEY, val);
+  const { data: levels = [] } = useQuery({
+    queryKey: ['user-levels', user?.organization_id],
+    queryFn: () => base44.entities.UserLevel.filter({ organization_id: user.organization_id }, 'created_date', 100),
+    enabled: !!user?.organization_id,
+  });
+
+  const canEdit = isAdminUser(user, levels);
+  const settings = orgState.settings;
+  const orgId = user?.organization_id;
+
+  const update = async (key, value, label) => {
+    if (!canEdit) return;
+    setSaving(key);
+    try {
+      await saveOrgSettings(base44, orgId, { [key]: value });
+      await logAudit(orgId, {
+        category: 'security',
+        action: 'setting_changed',
+        detail: `${label} set to ${typeof value === 'boolean' ? (value ? 'on' : 'off') : value}`,
+        actor_email: user?.email,
+      });
+      queryClient.invalidateQueries({ queryKey: ['my-org', orgId] });
+      toast.success('Setting saved');
+    } catch {
+      toast.error('Could not save setting');
+    }
+    setSaving(null);
   };
+
+  const Toggle = ({ settingKey, label, hint }) => (
+    <div className="flex items-center justify-between gap-4">
+      <div>
+        <Label>{label}</Label>
+        <p className="text-xs text-muted-foreground mt-0.5">{hint}</p>
+      </div>
+      <Switch
+        checked={settings[settingKey]}
+        disabled={!canEdit || saving === settingKey}
+        onCheckedChange={(v) => update(settingKey, v, label)}
+      />
+    </div>
+  );
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-        <p className="text-sm text-muted-foreground mt-1">Manage your workspace preferences</p>
+        <h1 className="text-2xl font-bold tracking-tight font-heading">Settings</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          {canEdit ? 'Manage your workspace preferences' : 'Your workspace preferences (view only)'}
+        </p>
       </div>
 
       <Card>
@@ -42,24 +89,22 @@ export default function Settings() {
           <CardDescription>Configure location tracking for your workforce</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label>Capture GPS on clock in/out</Label>
-              <p className="text-xs text-muted-foreground mt-0.5">Record employee location when they clock in or out</p>
-            </div>
-            <Switch defaultChecked />
-          </div>
+          <Toggle settingKey="capture_gps" label="Capture GPS on clock in/out" hint="Record employee location when they clock in or out" />
           <div className="flex items-start justify-between gap-4">
             <div>
               <Label>Live location update interval</Label>
               <p className="text-xs text-muted-foreground mt-0.5">How often to refresh GPS while clocked in</p>
             </div>
-            <Select value={trackingInterval} onValueChange={handleIntervalChange}>
+            <Select
+              value={String(settings.tracking_interval_ms ?? 0)}
+              onValueChange={(v) => update('tracking_interval_ms', Number(v), 'Location update interval')}
+              disabled={!canEdit}
+            >
               <SelectTrigger className="w-44">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {INTERVAL_OPTIONS.map(opt => (
+                {INTERVAL_OPTIONS.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                 ))}
               </SelectContent>
@@ -76,27 +121,10 @@ export default function Settings() {
           <CardDescription>Time tracking rules and alerts</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label>Overtime alerts</Label>
-              <p className="text-xs text-muted-foreground mt-0.5">Alert when an employee exceeds 8 hours</p>
-            </div>
-            <Switch defaultChecked />
-          </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <Label>Late clock-in alerts</Label>
-              <p className="text-xs text-muted-foreground mt-0.5">Alert if clock-in is 15+ minutes after shift start</p>
-            </div>
-            <Switch defaultChecked />
-          </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <Label>Missed clock-out alerts</Label>
-              <p className="text-xs text-muted-foreground mt-0.5">Alert if employee hasn't clocked out after shift</p>
-            </div>
-            <Switch defaultChecked />
-          </div>
+          <Toggle settingKey="overtime_alerts" label="Overtime alerts" hint="Alert when an employee exceeds 8 hours" />
+          <Toggle settingKey="late_clockin_alerts" label="Late clock-in alerts" hint="Alert if clock-in is 15+ minutes after shift start" />
+          <Toggle settingKey="missed_clockout_alerts" label="Missed clock-out alerts" hint="Alert if employee hasn't clocked out after shift" />
+          <Toggle settingKey="daily_report_default" label="Require daily reports by default" hint="New employees must file a daily report at clock-out" />
         </CardContent>
       </Card>
 
@@ -105,23 +133,11 @@ export default function Settings() {
           <CardTitle className="flex items-center gap-2 text-lg">
             <Bell className="h-5 w-5 text-primary" /> Notifications
           </CardTitle>
-          <CardDescription>How you receive alerts</CardDescription>
+          <CardDescription>How your team receives alerts</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label>In-app notifications</Label>
-              <p className="text-xs text-muted-foreground mt-0.5">Show notifications within the app</p>
-            </div>
-            <Switch defaultChecked />
-          </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <Label>Email notifications</Label>
-              <p className="text-xs text-muted-foreground mt-0.5">Send important alerts via email</p>
-            </div>
-            <Switch defaultChecked />
-          </div>
+          <Toggle settingKey="in_app_notifications" label="In-app notifications" hint="Show notifications within the app" />
+          <Toggle settingKey="email_notifications" label="Email notifications" hint="Send important alerts via email" />
         </CardContent>
       </Card>
 

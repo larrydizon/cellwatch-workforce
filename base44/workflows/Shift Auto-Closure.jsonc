@@ -1,0 +1,45 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "shift_auto_closure",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "sweep_shifts": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "autoClockOutSweep",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Close overdue shifts",
+            "description": "Sweep active shifts"
+          }
+        }
+      }
+    ]
+  },
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "*/15 * * * *",
+      "one_time_date": null,
+      "timezone": "Pacific/Auckland",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "name": "Shift Auto-Closure",
+  "description": "Every 15 minutes, closes any shift left open past its limit so shifts never run forever when a browser is closed."
+}

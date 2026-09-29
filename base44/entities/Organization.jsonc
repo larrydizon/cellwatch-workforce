@@ -41,6 +41,11 @@
       "type": "string",
       "format": "date-time"
     },
+    "current_period_end": {
+      "type": "string",
+      "format": "date-time",
+      "description": "End of the current paid billing period, kept in sync by Stripe"
+    },
     "owner_email": {
       "type": "string",
       "description": "Email of the user who owns this organization"
@@ -62,6 +67,10 @@
     "employee_delete_pin": {
       "type": "string",
       "description": "4-digit admin code required to remove an employee from the team directory"
+    },
+    "settings": {
+      "type": "object",
+      "description": "Organization operational settings: capture_gps, overtime_alerts, email_notifications, daily_report_default, late_clockin_alerts, missed_clockout_alerts, tracking_interval_ms"
     }
   },
   "required": [

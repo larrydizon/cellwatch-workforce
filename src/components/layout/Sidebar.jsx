@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Calendar, Briefcase, Clock,
   FileText, MessageSquare, Settings, ChevronLeft, ChevronRight,
-  ClipboardList, Bell, UmbrellaOff, LayoutGrid, CreditCard, DollarSign, User as UserIcon, ClipboardCheck
+  ClipboardList, Bell, UmbrellaOff, LayoutGrid, CreditCard, DollarSign, User as UserIcon, ClipboardCheck, ScrollText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -24,6 +24,7 @@ const navItems = [
   { label: 'Chat', icon: MessageSquare, path: '/chat' },
   { label: 'Notifications', icon: Bell, path: '/notifications' },
   { label: 'Billing', icon: CreditCard, path: '/billing' },
+  { label: 'Audit Log', icon: ScrollText, path: '/audit-log', adminOnly: true },
   { label: 'Settings', icon: Settings, path: '/settings' },
 ];
 
@@ -36,7 +37,7 @@ export default function Sidebar({ collapsed, onToggle, user, isAdmin }) {
       className={cn(
         "fixed left-0 top-0 h-full z-40 flex flex-col transition-all duration-300 ease-in-out",
         "bg-sidebar text-sidebar-foreground border-r border-sidebar-border",
-        collapsed ? "w-[68px]" : "w-[240px]",
+        collapsed ? "w-[64px]" : "w-[240px]",
         "hidden md:flex"
       )}
     >

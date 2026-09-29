@@ -17,6 +17,9 @@ import useShiftReminders from '@/hooks/useShiftReminders';
 import useAutoClockOut from '@/hooks/useAutoClockOut';
 import useOvertimePrompt from '@/hooks/useOvertimePrompt';
 import OvertimePromptModal from '@/components/timeclock/OvertimePromptModal';
+import PlanStatusBanner from '@/components/billing/PlanStatusBanner';
+import useOrganization from '@/hooks/useOrganization';
+import useLiveNotifications from '@/hooks/useLiveNotifications';
 
 const mobileNavItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
@@ -56,6 +59,7 @@ export default function AppLayout() {
 
   useShiftReminders(user);
   useAutoClockOut(user);
+  useLiveNotifications(user);
   const overtimeEntry = useOvertimePrompt(user);
 
   const { data: levels = [] } = useQuery({
@@ -65,6 +69,7 @@ export default function AppLayout() {
   });
 
   const isAdmin = isAdminUser(user, levels);
+  const orgState = useOrganization(user);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -115,15 +120,16 @@ export default function AppLayout() {
 
       <div className={cn(
         "transition-all duration-300",
-        collapsed ? "md:ml-[68px]" : "md:ml-[240px]"
+        collapsed ? "md:ml-[64px]" : "md:ml-[240px]"
       )}>
         <TopBar user={user} onMobileMenuOpen={() => setMobileOpen(true)} />
         <main className="p-4 md:p-6 pb-24 md:pb-6 min-h-[calc(100vh-4rem)]">
+          {isAdmin && <PlanStatusBanner orgState={orgState} />}
           <Outlet context={{ user }} />
         </main>
       </div>
 
-      <MobileNav />
+      <MobileNav isAdmin={isAdmin} />
 
       <OvertimePromptModal entry={overtimeEntry} />
     </div>

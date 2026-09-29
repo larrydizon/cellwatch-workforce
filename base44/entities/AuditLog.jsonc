@@ -1,0 +1,100 @@
+{
+  "name": "AuditLog",
+  "type": "object",
+  "properties": {
+    "organization_id": {
+      "type": "string",
+      "description": "Tenant (organization) this audit entry belongs to"
+    },
+    "actor_email": {
+      "type": "string",
+      "description": "Who performed the action (blank for automated system jobs)"
+    },
+    "actor_name": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "billing",
+        "seats",
+        "payroll",
+        "system",
+        "security",
+        "general"
+      ],
+      "default": "general",
+      "description": "Which operational area the action belongs to"
+    },
+    "action": {
+      "type": "string",
+      "description": "Short machine key e.g. employee_invited, shift_auto_closed"
+    },
+    "detail": {
+      "type": "string",
+      "description": "Human readable description shown in the audit feed"
+    },
+    "target": {
+      "type": "string",
+      "description": "Email, job number or record the action was performed on"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Optional structured extras for export"
+    }
+  },
+  "required": [
+    "organization_id",
+    "action"
+  ],
+  "rls": {
+    "read": {
+      "$and": [
+        {
+          "data.organization_id": "{{user.data.organization_id}}"
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "operations_manager"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "create": {
+      "data.organization_id": "{{user.data.organization_id}}"
+    },
+    "update": {
+      "$and": [
+        {
+          "data.organization_id": "{{user.data.organization_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$and": [
+        {
+          "data.organization_id": "{{user.data.organization_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

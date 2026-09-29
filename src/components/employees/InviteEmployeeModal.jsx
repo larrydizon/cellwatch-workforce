@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { toast } from 'sonner';
 import { POSITIONS } from '@/components/forms/IndustryTemplates';
 import { upsertDirectoryRecord } from '@/lib/employeeDirectory';
+import { logAudit } from '@/lib/auditLog';
 
 const EMPTY = { full_name: '', email: '', user_level: '', phone: '', position: '', job_title: '' };
 
@@ -20,6 +21,16 @@ export default function InviteEmployeeModal({ open, onOpenChange, organizationId
   const { data: levels = [] } = useQuery({
     queryKey: ['user-levels', organizationId],
     queryFn: () => base44.entities.UserLevel.filter({ organization_id: organizationId }, 'created_date', 100),
+    enabled: !!organizationId && open,
+  });
+
+  const { data: seatInfo } = useQuery({
+    queryKey: ['org-seat-info', organizationId],
+    queryFn: async () => {
+      const org = await base44.entities.Organization.get(organizationId);
+      const used = await base44.entities.Employee.count({ organization_id: organizationId });
+      return { limit: org.seat_limit ?? null, used };
+    },
     enabled: !!organizationId && open,
   });
 
@@ -39,6 +50,18 @@ export default function InviteEmployeeModal({ open, onOpenChange, organizationId
     if (!email) return;
     setSending(true);
     try {
+      // Seat limit is a hard block: the directory can never grow past the plan.
+      const orgDoc = await base44.entities.Organization.get(organizationId);
+      const seatLimit = orgDoc.seat_limit ?? null;
+      const seatCount = await base44.entities.Employee.count({ organization_id: organizationId });
+      const alreadyListed = await base44.entities.Employee.count({ organization_id: organizationId, email });
+      if (seatLimit !== null && seatCount >= seatLimit && !alreadyListed) {
+        toast.error(`All ${seatLimit} seats are in use. Upgrade your plan to add more employees.`);
+        setSending(false);
+        return;
+      }
+      const me = await base44.auth.me().catch(() => null);
+
       const level = levels.find(l => l.value === form.user_level);
       const appRole = level?.is_admin ? 'admin' : 'user';
       const details = {
@@ -94,6 +117,17 @@ export default function InviteEmployeeModal({ open, onOpenChange, organizationId
       }
 
       queryClient.invalidateQueries({ queryKey: ['employees'] });
+      queryClient.invalidateQueries({ queryKey: ['org-seat-info', organizationId] });
+      queryClient.invalidateQueries({ queryKey: ['org-seat-count', organizationId] });
+      await logAudit(organizationId, {
+        category: 'seats',
+        action: 'employee_invited',
+        detail: `${form.full_name || email} added to the team`,
+        target: email,
+        actor_email: me?.email,
+        actor_name: me?.full_name,
+        metadata: { role: appRole, user_level: form.user_level },
+      });
       if (inviteSent) {
         toast.success(`Invitation sent to ${email}`);
       } else {
@@ -112,7 +146,14 @@ export default function InviteEmployeeModal({ open, onOpenChange, organizationId
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add Employee</DialogTitle>
-          <DialogDescription>Enter their details and we'll send the login invite.</DialogDescription>
+          <DialogDescription>
+            Enter their details and we'll send the login invite.
+            {seatInfo?.limit != null && (
+              <span className="block mt-1 font-mono text-xs">
+                {seatInfo.used}/{seatInfo.limit} seats used
+              </span>
+            )}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="grid sm:grid-cols-2 gap-4 py-2">

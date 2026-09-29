@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Badge } from '@/components/ui/badge';
+import useLiveNotifications from '@/hooks/useLiveNotifications';
 
 export default function TopBar({ user, onMobileMenuOpen }) {
   const { data: notifications = [] } = useQuery({
@@ -16,6 +17,8 @@ export default function TopBar({ user, onMobileMenuOpen }) {
     },
     enabled: !!user?.email,
   });
+
+  useLiveNotifications(user);
 
   const unreadCount = notifications.length;
 

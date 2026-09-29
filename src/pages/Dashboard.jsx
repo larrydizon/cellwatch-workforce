@@ -2,24 +2,27 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useOutletContext } from 'react-router-dom';
-import {
-  Clock, Briefcase, AlertTriangle, CheckCircle2, FileText, LogIn, LogOut, LayoutDashboard, User
-} from 'lucide-react';
-import StatCard from '@/components/dashboard/StatCard';
-import ActiveWorkersList from '@/components/dashboard/ActiveWorkersList';
-import TodayJobsList from '@/components/dashboard/TodayJobsList';
+import { LogIn, LogOut, LayoutDashboard, User, Briefcase, Clock, FileText } from 'lucide-react';
 import moment from 'moment';
-import { Button } from '@/components/ui/button';
-import AdminCalendar from '@/components/dashboard/AdminCalendar';
-import LiveFieldMap from '@/components/dashboard/LiveFieldMap';
-import ForceClockOut from '@/components/dashboard/ForceClockOut';
+import StatCard from '@/components/dashboard/StatCard';
+import TodayJobsList from '@/components/dashboard/TodayJobsList';
 import FormsReminder from '@/components/dashboard/FormsReminder';
+import WorkforceOverview from '@/components/dashboard/WorkforceOverview';
+import OperationalBanner from '@/components/home/OperationalBanner';
+import SubscriptionSeatPanel from '@/components/home/SubscriptionSeatPanel';
+import AutomatedActionsPanel from '@/components/home/AutomatedActionsPanel';
+import QuickTogglesPanel from '@/components/home/QuickTogglesPanel';
+import AuditFeed from '@/components/audit/AuditFeed';
+import InviteEmployeeModal from '@/components/employees/InviteEmployeeModal';
+import useOrganization from '@/hooks/useOrganization';
 
 export default function Dashboard() {
   const { user } = useOutletContext();
   const isAdmin = ['admin', 'operations_manager', 'supervisor'].includes(user?.role);
-  const [viewMode, setViewMode] = useState('admin'); // 'admin' | 'employee' — only relevant for admins
+  const [viewMode, setViewMode] = useState('admin');
+  const [inviteOpen, setInviteOpen] = useState(false);
 
+  const orgState = useOrganization(user);
   const showAdminView = isAdmin && viewMode === 'admin';
 
   // ── Admin queries ──
@@ -53,7 +56,7 @@ export default function Dashboard() {
     enabled: showAdminView,
   });
 
-  // ── Employee queries (always fetch for admins too when in employee view) ──
+  // ── Employee queries ──
   const { data: myActiveEntry = [] } = useQuery({
     queryKey: ['my-active-entry', user?.email],
     queryFn: () => base44.entities.TimeEntry.filter({ employee_email: user.email, status: 'active' }, '-created_date', 1),
@@ -72,24 +75,16 @@ export default function Dashboard() {
     enabled: !!user?.email && (!isAdmin || viewMode === 'employee'),
   });
 
-  // ── Admin derived ──
-  const activeWorkers = allTimeEntries.filter(t => t.status === 'active');
-  const todayJobs = allJobs.filter(j => j.start_date === moment().format('YYYY-MM-DD'));
-  const completedToday = allJobs.filter(j => j.status === 'completed' && j.end_date === moment().format('YYYY-MM-DD'));
-  const overtimeEntries = allTimeEntries.filter(t => t.is_overtime);
-
-  // ── Employee derived ──
   const clockedIn = myActiveEntry[0] || null;
-  const myAssignedJobs = myJobs.filter(j => j.assigned_workers?.includes(user?.email));
-  const myTodayJobs = myAssignedJobs.filter(j => j.start_date === moment().format('YYYY-MM-DD'));
-  const myPendingTimesheets = myTimesheets.filter(t => t.status === 'pending_approval');
+  const myAssignedJobs = myJobs.filter((j) => j.assigned_workers?.includes(user?.email));
+  const myTodayJobs = myAssignedJobs.filter((j) => j.start_date === moment().format('YYYY-MM-DD'));
+  const myPendingTimesheets = myTimesheets.filter((t) => t.status === 'pending_approval');
   const todayHours = myTimesheets
-    .filter(t => moment(t.clock_in).isSame(moment(), 'day') && t.total_hours)
+    .filter((t) => moment(t.clock_in).isSame(moment(), 'day') && t.total_hours)
     .reduce((sum, t) => sum + t.total_hours, 0);
 
   const greeting = `Good ${moment().hour() < 12 ? 'morning' : moment().hour() < 17 ? 'afternoon' : 'evening'}, ${user?.full_name?.split(' ')[0] || 'there'}`;
 
-  // ── View toggle (admin only) ──
   const ViewToggle = () => (
     <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
       <button
@@ -111,103 +106,62 @@ export default function Dashboard() {
     </div>
   );
 
-  // ══ ADMIN VIEW ══
+  // ══ ADMIN VIEW — operational command floor ══
   if (showAdminView) {
     return (
       <div className="space-y-6">
+        <OperationalBanner orgState={orgState} />
+
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">{greeting}</h1>
+            <h1 className="text-2xl font-bold tracking-tight font-display">{greeting}</h1>
             <p className="text-muted-foreground text-sm mt-1">
-              {moment().format('dddd, D MMMM YYYY')} — Workforce overview
+              {moment().format('dddd, D MMMM YYYY')} — Operational command
             </p>
           </div>
           <ViewToggle />
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-          <StatCard title="Clocked In" value={activeWorkers.length} icon={Clock} color="success" subtitle="Active now" />
-          <StatCard title="Today's Jobs" value={todayJobs.length} icon={Briefcase} color="blue" subtitle="Scheduled" />
-          <StatCard title="Completed" value={completedToday.length} icon={CheckCircle2} color="success" subtitle="Today" />
-          <StatCard title="Pending Approval" value={pendingTimesheets.length} icon={FileText} color="warning" subtitle="Timesheets" />
-          <StatCard title="Overtime" value={overtimeEntries.length} icon={AlertTriangle} color="destructive" subtitle="This period" />
-          <StatCard title="Total Jobs" value={allJobs.length} icon={Briefcase} color="purple" subtitle="All time" />
+        {/* Top row — 60/40 */}
+        <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
+          <SubscriptionSeatPanel orgState={orgState} onAddSeat={() => setInviteOpen(true)} />
+          <AutomatedActionsPanel organizationId={user?.organization_id} />
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-6">
-          <div className="bg-card rounded-xl border border-border">
-            <div className="p-5 border-b border-border">
-              <div className="flex items-center justify-between">
-                <h2 className="font-semibold">Active Workers</h2>
-                <span className="text-xs bg-success/10 text-success px-2 py-1 rounded-full font-medium">
-                  {activeWorkers.length} clocked in
-                </span>
-              </div>
+        {/* Bottom row — 65/35 */}
+        <div className="grid gap-6 lg:grid-cols-[13fr_7fr]">
+          <div className="bg-card rounded-lg border border-border overflow-hidden">
+            <div className="px-4 py-3 border-b border-border">
+              <p className="font-semibold text-sm">Recent Operational Audit Log</p>
             </div>
-            <div className="p-4">
-              <ActiveWorkersList timeEntries={allTimeEntries} />
-            </div>
+            <AuditFeed organizationId={user?.organization_id} limit={12} showFilters actorEmail={user?.email} />
           </div>
-
-          <div className="bg-card rounded-xl border border-border">
-            <div className="p-5 border-b border-border">
-              <div className="flex items-center justify-between">
-                <h2 className="font-semibold">Today's Jobs</h2>
-                <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full font-medium">
-                  {todayJobs.length} scheduled
-                </span>
-              </div>
-            </div>
-            <div className="p-4">
-              <TodayJobsList jobs={todayJobs} />
-            </div>
-          </div>
+          <QuickTogglesPanel
+            organizationId={user?.organization_id}
+            settings={orgState.settings}
+            actorEmail={user?.email}
+          />
         </div>
 
-        {/* Live Field Map */}
-        <div className="bg-card rounded-xl border border-border">
-          <div className="p-5 border-b border-border">
-            <div className="flex items-center justify-between">
-              <h2 className="font-semibold">Live Field Map</h2>
-              <span className="text-xs bg-success/10 text-success px-2 py-1 rounded-full font-medium flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse inline-block" />
-                {allTimeEntries.filter(t => t.status === 'active').length} active
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">Most recent clock-in location of all active technicians</p>
-          </div>
-          <div className="p-4">
-            <LiveFieldMap timeEntries={allTimeEntries} />
-          </div>
-        </div>
+        <WorkforceOverview
+          allTimeEntries={allTimeEntries}
+          allJobs={allJobs}
+          pendingTimesheets={pendingTimesheets}
+          allShifts={allShifts}
+          allLeaveRequests={allLeaveRequests}
+        />
 
-        {/* Force Clock-Out */}
-        <div className="bg-card rounded-xl border border-border">
-          <div className="p-5 border-b border-border">
-            <div className="flex items-center justify-between">
-              <h2 className="font-semibold">Force Clock-Out</h2>
-              <span className="text-xs bg-destructive/10 text-destructive px-2 py-1 rounded-full font-medium">
-                Admin only
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">Manually clock out workers who have exceeded their hours</p>
-          </div>
-          <div className="p-4">
-            <ForceClockOut timeEntries={allTimeEntries} />
-          </div>
-        </div>
-
-        <AdminCalendar shifts={allShifts} leaveRequests={allLeaveRequests} />
+        <InviteEmployeeModal open={inviteOpen} onOpenChange={setInviteOpen} organizationId={user?.organization_id} />
       </div>
     );
   }
 
-  // ══ EMPLOYEE VIEW (also shown to admins when they switch to "My View") ══
+  // ══ EMPLOYEE VIEW ══
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{greeting}</h1>
+          <h1 className="text-2xl font-bold tracking-tight font-display">{greeting}</h1>
           <p className="text-muted-foreground text-sm mt-1">
             {moment().format('dddd, D MMMM YYYY')}
           </p>
@@ -215,8 +169,7 @@ export default function Dashboard() {
         {isAdmin && <ViewToggle />}
       </div>
 
-      {/* Clock status banner */}
-      <div className={`rounded-xl border p-5 flex items-center gap-4 ${clockedIn ? 'bg-success/5 border-success/20' : 'bg-muted/50 border-border'}`}>
+      <div className={`rounded-lg border p-5 flex items-center gap-4 ${clockedIn ? 'bg-success/5 border-success/20' : 'bg-muted/50 border-border'}`}>
         <div className={`h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 ${clockedIn ? 'bg-success/10' : 'bg-muted'}`}>
           {clockedIn ? <LogIn className="h-6 w-6 text-success" /> : <LogOut className="h-6 w-6 text-muted-foreground" />}
         </div>
@@ -238,7 +191,7 @@ export default function Dashboard() {
         </div>
         {clockedIn && (
           <div className="flex items-center gap-1.5">
-            <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
+            <span className="pulse-dot bg-success" />
             <span className="text-xs font-medium text-success">Active</span>
           </div>
         )}
@@ -246,7 +199,6 @@ export default function Dashboard() {
 
       <FormsReminder user={user} />
 
-      {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <StatCard title="My Jobs" value={myAssignedJobs.length} icon={Briefcase} color="blue" subtitle="Assigned" />
         <StatCard title="Today" value={myTodayJobs.length} icon={Briefcase} color="purple" subtitle="Scheduled" />
@@ -254,15 +206,12 @@ export default function Dashboard() {
         <StatCard title="Pending" value={myPendingTimesheets.length} icon={FileText} color="warning" subtitle="Timesheets" />
       </div>
 
-      {/* My Jobs */}
-      <div className="bg-card rounded-xl border border-border">
-        <div className="p-5 border-b border-border">
-          <div className="flex items-center justify-between">
-            <h2 className="font-semibold">Jobs Assigned to You</h2>
-            <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full font-medium">
-              {myAssignedJobs.length} total
-            </span>
-          </div>
+      <div className="bg-card rounded-lg border border-border">
+        <div className="p-5 border-b border-border flex items-center justify-between">
+          <h2 className="font-semibold">Jobs Assigned to You</h2>
+          <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full font-medium">
+            {myAssignedJobs.length} total
+          </span>
         </div>
         <div className="p-4">
           <TodayJobsList jobs={myAssignedJobs} />

@@ -1,0 +1,45 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "overdue_form_sweep",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "flag_overdue": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "flagOverdueForms",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Flag overdue forms",
+            "description": "Mark and notify"
+          }
+        }
+      }
+    ]
+  },
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 6 * * *",
+      "one_time_date": null,
+      "timezone": "Pacific/Auckland",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "name": "Overdue Form Sweep",
+  "description": "Each morning, flags form assignments past their due date as overdue and notifies the assigned employee."
+}
