@@ -12,6 +12,7 @@ export default function LandingFooter() {
         </div>
         <div className="flex items-center gap-6 text-sm text-muted-foreground">
           <a href="#features" className="transition-colors hover:text-foreground">Features</a>
+          <a href="#how-it-works" className="transition-colors hover:text-foreground">How it works</a>
           <a href="#pricing" className="transition-colors hover:text-foreground">Pricing</a>
         </div>
       </div>

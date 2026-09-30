@@ -5,7 +5,9 @@ import { useAuth } from '@/lib/AuthContext';
 import LandingHeader from '@/components/landing/LandingHeader';
 import LandingHero from '@/components/landing/LandingHero';
 import FeatureGrid from '@/components/landing/FeatureGrid';
+import HowItWorks from '@/components/landing/HowItWorks';
 import PricingSection from '@/components/landing/PricingSection';
+import CtaBand from '@/components/landing/CtaBand';
 import LandingFooter from '@/components/landing/LandingFooter';
 
 // Public front door. Renders without a session; signed-in visitors are sent
@@ -40,7 +42,9 @@ export default function Landing() {
       <LandingHeader onStartTrial={startTrial} onSignIn={signIn} />
       <LandingHero onStartTrial={startTrial} />
       <FeatureGrid />
+      <HowItWorks />
       <PricingSection onStartTrial={startTrial} />
+      <CtaBand onStartTrial={startTrial} />
       <LandingFooter />
     </div>
   );

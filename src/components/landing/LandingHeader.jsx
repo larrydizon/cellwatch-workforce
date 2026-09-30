@@ -9,6 +9,7 @@ export default function LandingHeader({ onStartTrial, onSignIn }) {
 
         <nav className="hidden items-center gap-8 text-sm text-muted-foreground md:flex">
           <a href="#features" className="transition-colors hover:text-foreground">Features</a>
+          <a href="#how-it-works" className="transition-colors hover:text-foreground">How it works</a>
           <a href="#pricing" className="transition-colors hover:text-foreground">Pricing</a>
         </nav>
 
