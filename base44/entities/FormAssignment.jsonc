@@ -108,9 +108,6 @@
               "user_condition": {
                 "role": "supervisor"
               }
-            },
-            {
-              "data.employee_email": "{{user.email}}"
             }
           ]
         }

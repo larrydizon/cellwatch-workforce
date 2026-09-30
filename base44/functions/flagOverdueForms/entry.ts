@@ -7,9 +7,9 @@ export default async function (req: Request): Promise<Response> {
   try {
     const base44 = createClientFromRequest(req);
 
-    let user: any = null;
-    try { user = await base44.auth.me(); } catch { user = null; }
-    if (user && user.role !== 'admin') {
+    // Fail closed: service-role work must never be reachable anonymously.
+    const user: any = await base44.auth.me().catch(() => null);
+    if (!user || user.role !== 'admin') {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 

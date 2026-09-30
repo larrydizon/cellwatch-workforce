@@ -8,9 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, ChevronLeft, ChevronRight, Clock, MapPin, User } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, Clock, User } from 'lucide-react';
 import moment from 'moment';
 import { toast } from 'sonner';
+import { listDirectoryMembers } from '@/lib/employeeDirectory';
 
 const statusColors = {
   scheduled: "bg-blue-50 text-blue-700 border-blue-200",
@@ -53,11 +54,11 @@ export default function Schedule() {
 
   const { data: users = [] } = useQuery({
     queryKey: ['schedule-users'],
-    queryFn: () => base44.entities.User.list('full_name', 200),
+    queryFn: listDirectoryMembers,
   });
 
   // Only employees belonging to the current organization
-  const orgUsers = users.filter(u => u.organization_id === currentUser?.organization_id);
+  const orgUsers = users;
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Shift.create({ ...data, status: 'scheduled', organization_id: currentUser?.organization_id }),

@@ -38,18 +38,13 @@ export function employeeRecordFromUser(user, organizationId) {
 export async function upsertDirectoryRecord(organizationId, email, fields = {}) {
   if (!organizationId || !email) return null;
   const key = email.toLowerCase();
+  const response = await base44.functions.invoke('employeeCommand', { email: key, fields });
+  return response?.data?.entry ?? response?.data ?? response;
+}
 
-  const existing = await base44.entities.Employee.filter(
-    { organization_id: organizationId, email: key },
-    '-created_date',
-    1
-  );
-
-  const payload = { organization_id: organizationId, email: key, ...fields };
-  if (existing.length) {
-    return base44.entities.Employee.update(existing[0].id, payload);
-  }
-  return base44.entities.Employee.create({ full_name: key, ...payload });
+export async function listDirectoryMembers() {
+  const response = await base44.functions.invoke('listDirectory', {});
+  return response?.data?.members ?? [];
 }
 
 // userId: the linked user account id. Pass null for directory-only records

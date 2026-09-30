@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Briefcase } from 'lucide-react';
 import { syncEmployeeRecord } from '@/lib/employeeDirectory';
+import { runOrganizationCommand } from '@/lib/organizations';
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -21,12 +22,12 @@ export default function Onboarding() {
       if (u?.organization_id) { navigate('/', { replace: true }); return; }
       // If the user was invited to an organization, join it instead of creating a new one
       try {
-        const orgs = await base44.entities.Organization.list('-created_date', 50);
-        if (orgs.length) {
-          const org = orgs.find(o => (o.member_emails || []).includes(u.email)) || orgs[0];
+        const response = await base44.functions.invoke('organizationCommand', { action: 'claim_invite' });
+        const org = response?.data?.organization;
+        const pending = response?.data?.invite;
+        if (org?.id) {
           await base44.auth.updateMe({ organization_id: org.id });
           // Apply the details the admin entered when they were added
-          const pending = (org.pending_invites || []).find(p => p.email?.toLowerCase() === u.email?.toLowerCase());
           if (pending) {
             await base44.auth.updateMe({
               phone: pending.phone || '',
@@ -52,15 +53,7 @@ export default function Onboarding() {
     if (!orgName.trim()) { toast.error('Enter an organization name'); return; }
     setSubmitting(true);
     try {
-      const org = await base44.entities.Organization.create({
-        name: orgName.trim(),
-        owner_email: user.email,
-        member_emails: [user.email],
-        plan: 'free',
-        plan_status: 'trial',
-        seat_limit: 5,
-        trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-      });
+      const org = await runOrganizationCommand('create_workspace', { name: orgName.trim() });
       await base44.auth.updateMe({ organization_id: org.id });
       await syncEmployeeRecord(await base44.auth.me(), org.id);
       toast.success('Organization created');

@@ -70,7 +70,14 @@
       ]
     },
     "create": {
-      "data.organization_id": "{{user.data.organization_id}}"
+      "$and": [
+        { "data.organization_id": "{{user.data.organization_id}}" },
+        { "$or": [
+          { "user_condition": { "role": "admin" } },
+          { "user_condition": { "role": "operations_manager" } },
+          { "user_condition": { "role": "supervisor" } }
+        ] }
+      ]
     },
     "update": {
       "$and": [

@@ -8,10 +8,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Plus, Send, MessageSquare, Users, Hash } from 'lucide-react';
+import { Plus, Send, MessageSquare, Users } from 'lucide-react';
 import moment from 'moment';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
+import { listDirectoryMembers } from '@/lib/employeeDirectory';
 
 export default function Chat() {
   const { user } = useOutletContext();
@@ -36,7 +36,7 @@ export default function Chat() {
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ['chat-users'],
-    queryFn: () => base44.entities.User.list('full_name', 200),
+    queryFn: listDirectoryMembers,
   });
 
   useEffect(() => {
@@ -48,6 +48,7 @@ export default function Chat() {
       await base44.entities.Message.create({
         organization_id: user.organization_id,
         conversation_id: activeConvo.id,
+        participant_emails: activeConvo.participants || [user.email],
         sender_email: user.email,
         sender_name: user.full_name,
         content,

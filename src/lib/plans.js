@@ -1,14 +1,13 @@
 // SaaS subscription plans.
-// Replace the `priceId` values with your real Stripe Price IDs
-// (Stripe Dashboard → Products → copy the price_xxx for each plan).
-// The "free" plan needs no priceId; "enterprise" is contact-sales (no checkout).
+// Stripe Price IDs are intentionally server-only. The checkout function maps
+// these public plan keys to STRIPE_*_PRICE_ID secrets.
 
 export const PLANS = [
   {
     key: "free",
     name: "Free",
     price: 0,
-    priceId: null,
+    checkout: false,
     seats: 5,
     period: "forever",
     description: "Get started solo",
@@ -19,7 +18,7 @@ export const PLANS = [
     key: "starter",
     name: "Starter",
     price: 29,
-    priceId: "price_REPLACE_STARTER",
+    checkout: true,
     seats: 15,
     period: "month",
     description: "Small teams",
@@ -30,7 +29,7 @@ export const PLANS = [
     key: "pro",
     name: "Pro",
     price: 99,
-    priceId: "price_REPLACE_PRO",
+    checkout: true,
     seats: 50,
     period: "month",
     description: "Growing field teams",
@@ -41,7 +40,7 @@ export const PLANS = [
     key: "enterprise",
     name: "Enterprise",
     price: null,
-    priceId: null,
+    checkout: false,
     seats: null,
     period: "custom",
     description: "Large organizations",

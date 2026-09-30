@@ -3,7 +3,6 @@ import { UserPlus, ArrowUpRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import SeatGauge from './SeatGauge';
-import { PLANS } from '@/lib/plans';
 
 // Subscription & Seat Operations bento: current tier, seat utilization, inline add.
 export default function SubscriptionSeatPanel({ orgState, onAddSeat }) {

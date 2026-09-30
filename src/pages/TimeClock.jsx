@@ -5,13 +5,14 @@ import { useOutletContext } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Clock, MapPin, Coffee, LogOut, Play, AlertTriangle } from 'lucide-react';
+import { Coffee, LogOut, Play, AlertTriangle } from 'lucide-react';
 import moment from 'moment';
 import { toast } from 'sonner';
 import LocationMapLink from '@/components/timeclock/LocationMapLink';
 import PreStartFormModal from '@/components/forms/PreStartFormModal';
 import AdminClockPanel from '@/components/timeclock/AdminClockPanel';
 import DailyReportModal from '@/components/reports/DailyReportModal';
+import { runTimeEntryCommand } from '@/lib/timeEntries';
 
 const TRACKING_INTERVAL_KEY = 'location_tracking_interval_ms';
 
@@ -148,12 +149,7 @@ export default function TimeClock() {
   const clockInMutation = useMutation({
     mutationFn: async () => {
       const job = jobs.find(j => j.id === selectedJob);
-      return base44.entities.TimeEntry.create({
-        organization_id: user.organization_id,
-        employee_email: user.email,
-        employee_name: user.full_name,
-        clock_in: new Date().toISOString(),
-        status: 'active',
+      return runTimeEntryCommand('clock_in', {
         job_id: selectedJob || undefined,
         job_title: job?.title || undefined,
         clock_in_lat: location?.lat,
@@ -168,21 +164,12 @@ export default function TimeClock() {
   });
 
   const clockOutMutation = useMutation({
-    mutationFn: async () => {
-      const clockIn = moment(activeEntry.clock_in);
-      const clockOut = moment();
-      const breakMins = activeEntry.break_minutes || 0;
-      const totalHours = Math.max(0, clockOut.diff(clockIn, 'hours', true) - breakMins / 60);
-
-      return base44.entities.TimeEntry.update(activeEntry.id, {
-        clock_out: new Date().toISOString(),
+    mutationFn: () =>
+      runTimeEntryCommand('clock_out', {
+        entry_id: activeEntry.id,
         clock_out_lat: location?.lat,
         clock_out_lng: location?.lng,
-        status: 'pending_approval',
-        total_hours: Math.round(totalHours * 100) / 100,
-        is_overtime: totalHours > 8,
-      });
-    },
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['active-time-entry'] });
       queryClient.invalidateQueries({ queryKey: ['today-entries'] });
@@ -191,20 +178,7 @@ export default function TimeClock() {
   });
 
   const breakMutation = useMutation({
-    mutationFn: async () => {
-      if (activeEntry.break_start && !activeEntry.break_end) {
-        const breakDuration = moment().diff(moment(activeEntry.break_start), 'minutes');
-        return base44.entities.TimeEntry.update(activeEntry.id, {
-          break_end: new Date().toISOString(),
-          break_minutes: (activeEntry.break_minutes || 0) + breakDuration,
-        });
-      } else {
-        return base44.entities.TimeEntry.update(activeEntry.id, {
-          break_start: new Date().toISOString(),
-          break_end: null,
-        });
-      }
-    },
+    mutationFn: () => runTimeEntryCommand('break_toggle', { entry_id: activeEntry.id }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['active-time-entry'] });
       toast.success(activeEntry?.break_start && !activeEntry?.break_end ? 'Break ended' : 'Break started');

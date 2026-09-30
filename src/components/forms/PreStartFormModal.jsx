@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { submitFormResponse } from '@/lib/forms';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ClipboardCheck, ChevronRight, ChevronLeft } from 'lucide-react';
+import { ClipboardCheck, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import QuestionField from './QuestionField';
 
-export default function PreStartFormModal({ forms, user, assignments, jobId, jobTitle, open, onOpenChange, onAllCompleted }) {
+export default function PreStartFormModal({ forms, assignments, jobId, open, onOpenChange, onAllCompleted }) {
   const queryClient = useQueryClient();
   const [formIndex, setFormIndex] = useState(0);
   const [answers, setAnswers] = useState({});
@@ -17,21 +17,7 @@ export default function PreStartFormModal({ forms, user, assignments, jobId, job
   const questions = currentForm?.questions || [];
 
   const submitMutation = useMutation({
-    mutationFn: async (data) => {
-      const submission = await base44.entities.FormSubmission.create(data);
-      // If this form was assigned to the employee, mark the assignment complete
-      const assignment = (assignments || []).find(
-        a => a.form_template_id === currentForm.id && a.status === 'pending'
-      );
-      if (assignment) {
-        await base44.entities.FormAssignment.update(assignment.id, {
-          status: 'completed',
-          completed_at: new Date().toISOString(),
-          form_submission_id: submission.id,
-        });
-      }
-      return submission;
-    },
+    mutationFn: submitFormResponse,
     onSuccess: () => {
       const nextCompleted = [...completedForms, currentForm.id];
       setCompletedForms(nextCompleted);
@@ -69,16 +55,14 @@ export default function PreStartFormModal({ forms, user, assignments, jobId, job
       answer: answers[q.id] ?? '',
     }));
 
+    const assignment = (assignments || []).find(
+      a => a.form_template_id === currentForm.id && ['pending', 'overdue'].includes(a.status)
+    );
     submitMutation.mutate({
-      organization_id: user.organization_id,
       form_template_id: currentForm.id,
-      form_title: currentForm.title,
-      employee_email: user.email,
-      employee_name: user.full_name,
+      assignment_id: assignment?.id,
       answers: answerList,
-      submitted_at: new Date().toISOString(),
       job_id: jobId || undefined,
-      job_title: jobTitle || undefined,
     });
   };
 

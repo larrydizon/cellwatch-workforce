@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Play, LogOut, UserCog } from 'lucide-react';
 import moment from 'moment';
 import { toast } from 'sonner';
+import { runTimeEntryCommand } from '@/lib/timeEntries';
+import { listDirectoryMembers } from '@/lib/employeeDirectory';
 
 function currentLocation() {
   return new Promise((resolve) => {
@@ -18,14 +20,14 @@ function currentLocation() {
   });
 }
 
-export default function AdminClockPanel({ user }) {
+export default function AdminClockPanel() {
   const queryClient = useQueryClient();
   const [employeeEmail, setEmployeeEmail] = useState('');
   const [jobId, setJobId] = useState('');
 
   const { data: employees = [] } = useQuery({
     queryKey: ['admin-clock-employees'],
-    queryFn: () => base44.entities.User.list('full_name', 200),
+    queryFn: listDirectoryMembers,
   });
 
   const { data: jobs = [] } = useQuery({
@@ -61,15 +63,10 @@ export default function AdminClockPanel({ user }) {
   const clockInMutation = useMutation({
     mutationFn: async () => {
       const loc = await currentLocation();
-      const job = employeeJobs.find(j => j.id === jobId);
-      return base44.entities.TimeEntry.create({
-        organization_id: user.organization_id,
+      return runTimeEntryCommand('admin_clock_in', {
         employee_email: employee.email,
         employee_name: employee.full_name,
-        clock_in: new Date().toISOString(),
-        status: 'active',
         job_id: jobId || undefined,
-        job_title: job?.title || undefined,
         clock_in_lat: loc?.lat,
         clock_in_lng: loc?.lng,
       });
@@ -83,17 +80,10 @@ export default function AdminClockPanel({ user }) {
   const clockOutMutation = useMutation({
     mutationFn: async () => {
       const loc = await currentLocation();
-      const totalHours = Math.max(
-        0,
-        moment().diff(moment(activeEntry.clock_in), 'hours', true) - (activeEntry.break_minutes || 0) / 60
-      );
-      return base44.entities.TimeEntry.update(activeEntry.id, {
-        clock_out: new Date().toISOString(),
+      return runTimeEntryCommand('admin_clock_out', {
+        entry_id: activeEntry.id,
         clock_out_lat: loc?.lat,
         clock_out_lng: loc?.lng,
-        status: 'pending_approval',
-        total_hours: Math.round(totalHours * 100) / 100,
-        is_overtime: totalHours > 8,
       });
     },
     onSuccess: () => {

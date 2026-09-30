@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import moment from 'moment';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { AlarmClock, LogOut, Timer } from 'lucide-react';
 import { SHIFT_LIMIT_HOURS } from '@/lib/shiftLimits';
+import { runTimeEntryCommand } from '@/lib/timeEntries';
 
 const EXTRA_OPTIONS = [0.5, 1, 2, 3, 4];
 
@@ -39,7 +39,7 @@ export default function OvertimePromptModal({ entry }) {
   }, [open, entry?.id]);
 
   const decideMutation = useMutation({
-    mutationFn: (data) => base44.entities.TimeEntry.update(entry.id, data),
+    mutationFn: (data) => runTimeEntryCommand('overtime_decision', { entry_id: entry.id, ...data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['overtime-prompt-entry'] });
       queryClient.invalidateQueries({ queryKey: ['auto-clockout-active'] });
@@ -57,11 +57,11 @@ export default function OvertimePromptModal({ entry }) {
   const elapsed = Math.max(0, moment().diff(clockIn, 'hours', true) - (entry.break_minutes || 0) / 60);
 
   const accept = () => decideMutation.mutate({
-    overtime_decision: 'accepted',
+    decision: 'accepted',
     overtime_hours: Math.max(0.5, Number(extraHours) || 0),
   });
 
-  const decline = () => decideMutation.mutate({ overtime_decision: 'declined', overtime_hours: 0 });
+  const decline = () => decideMutation.mutate({ decision: 'declined', overtime_hours: 0 });
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
