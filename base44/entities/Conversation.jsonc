@@ -77,7 +77,14 @@
       ]
     },
     "create": {
-      "data.organization_id": "{{user.data.organization_id}}"
+      "$and": [
+        {
+          "data.organization_id": "{{user.data.organization_id}}"
+        },
+        {
+          "data.participants": "{{user.email}}"
+        }
+      ]
     },
     "update": {
       "$and": [

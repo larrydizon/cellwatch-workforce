@@ -10,6 +10,13 @@
       "type": "string",
       "description": "ID of the conversation"
     },
+    "participant_emails": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Emails of everyone in the conversation this message belongs to, copied from the conversation so access can be scoped per message"
+    },
     "sender_email": {
       "type": "string"
     },
@@ -32,13 +39,6 @@
         "type": "string"
       },
       "description": "Emails of users who have read this message"
-    },
-    "participant_emails": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "description": "Emails of everyone in the conversation this message belongs to, copied from the conversation so access can be scoped per message"
     },
     "is_announcement": {
       "type": "boolean",
@@ -84,6 +84,13 @@
       "$and": [
         {
           "data.organization_id": "{{user.data.organization_id}}"
+        },
+        {
+          "data.participant_emails": {
+            "$in": [
+              "{{user.email}}"
+            ]
+          }
         },
         {
           "$or": [
