@@ -28,12 +28,17 @@ export default async function (req: Request): Promise<Response> {
     }
 
     const stripe = new Stripe(secret);
+    // The portal configuration allows card updates, invoice history and
+    // cancelling at the end of the paid period.
+    const configuration = Deno.env.get('STRIPE_PORTAL_CONFIG_ID');
     const session = await stripe.billingPortal.sessions.create({
       customer: org.stripe_customer_id,
       return_url: `${appUrl}/billing?portal=return`,
+      ...(configuration ? { configuration } : {}),
     });
     return Response.json({ url: session.url });
   } catch (error: any) {
+    console.error('createPortalSession failed:', error?.message);
     return Response.json({ error: error?.message || 'Unable to open billing portal' }, { status: 500 });
   }
 }

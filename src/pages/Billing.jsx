@@ -8,6 +8,7 @@ import { PLANS } from '@/lib/plans';
 import { toast } from 'sonner';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import PlanCard from '@/components/billing/PlanCard';
+import { openStripePage } from '@/lib/stripeCheckout';
 
 const planLabels = { free: 'Free', starter: 'Starter', pro: 'Pro', enterprise: 'Enterprise' };
 const statusColors = {
@@ -59,13 +60,15 @@ export default function Billing() {
     }
     setSubscribing(plan.key);
     try {
-      const res = await base44.functions.invoke('createCheckoutSession', {
-        plan: plan.key,
-        returnUrl: window.location.origin,
+      await openStripePage(async () => {
+        const res = await base44.functions.invoke('createCheckoutSession', {
+          plan: plan.key,
+          returnUrl: window.location.origin,
+        });
+        return res.data.url;
       });
-      window.location.href = res.data.url;
     } catch (e) {
-      toast.error(e.response?.data?.error || 'Failed to start checkout');
+      toast.error(e.response?.data?.error || e.message || 'Failed to start checkout');
     }
     setSubscribing(null);
   };
@@ -74,10 +77,12 @@ export default function Billing() {
   const handleManageBilling = async () => {
     setOpeningPortal(true);
     try {
-      const res = await base44.functions.invoke('createPortalSession', { returnUrl: window.location.origin });
-      window.location.href = res.data.url;
+      await openStripePage(async () => {
+        const res = await base44.functions.invoke('createPortalSession', { returnUrl: window.location.origin });
+        return res.data.url;
+      });
     } catch (e) {
-      toast.error(e.response?.data?.error || 'Could not open the billing portal');
+      toast.error(e.response?.data?.error || e.message || 'Could not open the billing portal');
     }
     setOpeningPortal(false);
   };

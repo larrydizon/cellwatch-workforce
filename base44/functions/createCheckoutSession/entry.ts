@@ -43,6 +43,14 @@ export default async function (req: Request): Promise<Response> {
       await base44.asServiceRole.entities.Organization.update(org.id, { stripe_customer_id: customerId });
     }
 
+    // base44_app_id lets Base44 track the transaction; organization_id and plan
+    // are what the webhook uses to update the workspace.
+    const metadata = {
+      organization_id: org.id,
+      plan,
+      base44_app_id: Deno.env.get('BASE44_APP_ID') || '',
+    };
+
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       customer: customerId,
@@ -51,11 +59,12 @@ export default async function (req: Request): Promise<Response> {
       cancel_url: `${appUrl}/billing`,
       allow_promotion_codes: true,
       client_reference_id: org.id,
-      metadata: { organization_id: org.id, plan },
-      subscription_data: { metadata: { organization_id: org.id, plan } },
+      metadata,
+      subscription_data: { metadata },
     });
     return Response.json({ url: session.url });
   } catch (error: any) {
+    console.error('createCheckoutSession failed:', error?.message);
     return Response.json({ error: error?.message || 'Unable to start checkout' }, { status: 500 });
   }
 }
