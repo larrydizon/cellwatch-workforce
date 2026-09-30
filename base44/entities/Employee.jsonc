@@ -85,6 +85,16 @@
       "type": "boolean",
       "default": false,
       "description": "If true, this employee must file a job-by-job daily report when clocking out"
+    },
+    "location_consent": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when the employee has agreed to location tracking. Only the employee can set this for themselves."
+    },
+    "location_consent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the employee made their location-tracking choice. Presence means they have already been asked."
     }
   },
   "required": [
@@ -95,13 +105,31 @@
   "rls": {
     "read": {
       "$and": [
-        { "data.organization_id": "{{user.data.organization_id}}" },
-        { "$or": [
-          { "data.email": "{{user.email}}" },
-          { "user_condition": { "role": "admin" } },
-          { "user_condition": { "role": "operations_manager" } },
-          { "user_condition": { "role": "supervisor" } }
-        ] }
+        {
+          "data.organization_id": "{{user.data.organization_id}}"
+        },
+        {
+          "$or": [
+            {
+              "data.email": "{{user.email}}"
+            },
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "operations_manager"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "supervisor"
+              }
+            }
+          ]
+        }
       ]
     },
     "create": {
@@ -110,7 +138,9 @@
           "data.organization_id": "{{user.data.organization_id}}"
         },
         {
-          "user_condition": { "role": "admin" }
+          "user_condition": {
+            "role": "admin"
+          }
         }
       ]
     },
@@ -120,7 +150,9 @@
           "data.organization_id": "{{user.data.organization_id}}"
         },
         {
-          "user_condition": { "role": "admin" }
+          "user_condition": {
+            "role": "admin"
+          }
         }
       ]
     },

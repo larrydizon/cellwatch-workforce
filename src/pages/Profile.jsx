@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
 import EmployeeProfileForm from '@/components/profile/EmployeeProfileForm';
 import CertificatesList from '@/components/profile/CertificatesList';
+import LocationTrackingCard from '@/components/profile/LocationTrackingCard';
 
 export default function Profile() {
   const { user } = useOutletContext();
@@ -27,6 +28,8 @@ export default function Profile() {
       {profile && (
         <EmployeeProfileForm targetUser={profile} viewer={user} onSaved={refresh} />
       )}
+
+      <LocationTrackingCard />
 
       {profile && <CertificatesList user={profile} />}
 

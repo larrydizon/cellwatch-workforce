@@ -1,9 +1,11 @@
 import React, { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import moment from 'moment';
 import { MapPin } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
 
 // Fix default marker icon paths broken by bundlers
 delete L.Icon.Default.prototype._getIconUrl;
@@ -39,6 +41,35 @@ export default function LiveFieldMap({ timeEntries = [] }) {
     () => timeEntries.filter(t => t.status === 'active' && (!t.clock_in_lat || !t.clock_in_lng)),
     [timeEntries]
   );
+
+  const organizationId = timeEntries[0]?.organization_id;
+
+  // Consent lives on the employee directory record, so an admin can tell a
+  // privacy opt-out apart from a device that simply has location switched off.
+  const { data: employees = [] } = useQuery({
+    queryKey: ['map-consent', organizationId],
+    queryFn: async () => {
+      const page = await base44.entities.Employee.filter(
+        { organization_id: organizationId },
+        { sort: 'full_name', limit: 500 }
+      );
+      return page.items || [];
+    },
+    enabled: !!organizationId,
+  });
+
+  const consentByEmail = useMemo(() => {
+    const map = {};
+    employees.forEach(e => { if (e.email) map[e.email] = e; });
+    return map;
+  }, [employees]);
+
+  const gpsStatus = (email) => {
+    const record = consentByEmail[email];
+    if (record && !record.location_consent_at) return 'Consent not given';
+    if (record && !record.location_consent) return 'Tracking off';
+    return 'No GPS data';
+  };
 
   // Default center: New Zealand
   const center = active.length > 0
@@ -127,7 +158,7 @@ export default function LiveFieldMap({ timeEntries = [] }) {
                 {entry.employee_name?.split(' ').map(n => n[0]).join('').slice(0, 2) || '?'}
               </div>
               <span>{entry.employee_name || entry.employee_email}</span>
-              <span className="ml-auto italic">No GPS data</span>
+              <span className="ml-auto italic">{gpsStatus(entry.employee_email)}</span>
             </div>
           ))}
         </div>

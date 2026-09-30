@@ -20,6 +20,8 @@ import OvertimePromptModal from '@/components/timeclock/OvertimePromptModal';
 import PlanStatusBanner from '@/components/billing/PlanStatusBanner';
 import useOrganization from '@/hooks/useOrganization';
 import useLiveNotifications from '@/hooks/useLiveNotifications';
+import { LocationConsentProvider } from '@/lib/LocationConsentContext';
+import LocationConsentNotice from '@/components/timeclock/LocationConsentNotice';
 
 const mobileNavItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
@@ -125,7 +127,10 @@ export default function AppLayout() {
         <TopBar user={user} onMobileMenuOpen={() => setMobileOpen(true)} />
         <main className="p-4 md:p-6 pb-24 md:pb-6 min-h-[calc(100vh-4rem)]">
           {isAdmin && <PlanStatusBanner orgState={orgState} />}
-          <Outlet context={{ user }} />
+          <LocationConsentProvider user={user}>
+            <Outlet context={{ user }} />
+            <LocationConsentNotice />
+          </LocationConsentProvider>
         </main>
       </div>
 

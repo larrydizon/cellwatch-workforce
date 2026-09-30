@@ -13,6 +13,8 @@ import PreStartFormModal from '@/components/forms/PreStartFormModal';
 import AdminClockPanel from '@/components/timeclock/AdminClockPanel';
 import DailyReportModal from '@/components/reports/DailyReportModal';
 import { runTimeEntryCommand } from '@/lib/timeEntries';
+import useOrganization from '@/hooks/useOrganization';
+import { useLocationConsent } from '@/lib/LocationConsentContext';
 
 const TRACKING_INTERVAL_KEY = 'location_tracking_interval_ms';
 
@@ -23,6 +25,11 @@ function getTrackingInterval() {
 
 export default function TimeClock() {
   const { user } = useOutletContext();
+  const { consentGiven } = useLocationConsent();
+  const orgState = useOrganization(user);
+  // Nothing location-related runs without one-time consent, and never when the
+  // workspace has switched GPS capture off.
+  const trackLocation = consentGiven && orgState.settings.capture_gps;
   const [currentTime, setCurrentTime] = useState(moment());
   const [selectedJob, setSelectedJob] = useState('');
   const [location, setLocation] = useState(null);
@@ -37,19 +44,20 @@ export default function TimeClock() {
     return () => clearInterval(timer);
   }, []);
 
-  // Get initial location once
+  // Get initial location once — the browser permission is only ever requested
+  // after the employee has consented.
   useEffect(() => {
-    if (!navigator.geolocation) return;
+    if (!trackLocation || !navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       (pos) => setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
       () => {}
     );
-  }, []);
+  }, [trackLocation]);
 
   // Live location tracking interval (from Settings preference)
   useEffect(() => {
     const interval = getTrackingInterval();
-    if (!interval || !navigator.geolocation) return;
+    if (!trackLocation || !interval || !navigator.geolocation) return;
 
     trackingRef.current = setInterval(() => {
       navigator.geolocation.getCurrentPosition(
@@ -59,7 +67,7 @@ export default function TimeClock() {
     }, interval);
 
     return () => clearInterval(trackingRef.current);
-  }, []);
+  }, [trackLocation]);
 
   const { data: activeEntry } = useQuery({
     queryKey: ['active-time-entry', user?.email],
@@ -187,8 +195,9 @@ export default function TimeClock() {
 
   const handleClockInClick = () => {
     if (requiredForms.length > 0) {
-      // Employees must be onsite (location captured) to complete the pre-start check
-      if (!location) {
+      // Employees must be onsite (location captured) to complete the pre-start check.
+      // With tracking off there is no location to check against, so clock-in still works.
+      if (trackLocation && !location) {
         toast.error('You must be onsite to complete the pre-start check. Enable location access and try again.');
         return;
       }
@@ -200,7 +209,7 @@ export default function TimeClock() {
 
   // Finish clock-in once every required form has been submitted
   const completePreStartCheck = () => {
-    if (!location) {
+    if (trackLocation && !location) {
       toast.error('You must be onsite to complete the pre-start check. Enable location access and try again.');
       return;
     }
@@ -310,7 +319,7 @@ export default function TimeClock() {
                 {requiredForms.length} form{requiredForms.length > 1 ? 's' : ''} need completing before clock-in — tap to open
               </button>
             )}
-            {requiredForms.length > 0 && !location && (
+            {requiredForms.length > 0 && trackLocation && !location && (
               <p className="text-center text-xs text-muted-foreground">
                 You must be onsite with location enabled to clock in.
               </p>

@@ -1,10 +1,13 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 
 const MANAGER_ROLES = new Set(['admin', 'operations_manager', 'supervisor']);
+// Consent is personal: an employee records it for themselves, never for someone else.
+const CONSENT_FIELDS = ['location_consent', 'location_consent_at'];
 const SELF_FIELDS = new Set([
   'full_name', 'phone', 'address', 'job_title', 'position', 'team', 'skills',
   'emergency_contact_name', 'emergency_contact_phone',
   'emergency_contact_relationship', 'photos', 'custom_fields',
+  ...CONSENT_FIELDS,
 ]);
 const MANAGER_FIELDS = new Set([
   ...SELF_FIELDS, 'user_id', 'role', 'user_level', 'employment_type',
@@ -43,6 +46,9 @@ export default async function (req: Request): Promise<Response> {
     }
 
     const fields = cleanFields(body.fields, isManager ? MANAGER_FIELDS : SELF_FIELDS);
+    if (requestedEmail !== user.email.toLowerCase()) {
+      for (const key of CONSENT_FIELDS) delete fields[key];
+    }
     if (!isManager) fields.user_id = user.id;
     const svc = base44.asServiceRole;
     const found: any = await svc.entities.Employee.filter({
