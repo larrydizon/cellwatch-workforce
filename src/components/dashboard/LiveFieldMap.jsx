@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import moment from 'moment';
-import { Clock, MapPin } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 
 // Fix default marker icon paths broken by bundlers
 delete L.Icon.Default.prototype._getIconUrl;

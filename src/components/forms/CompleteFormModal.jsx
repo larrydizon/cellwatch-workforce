@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { submitFormResponse } from '@/lib/forms';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ClipboardCheck } from 'lucide-react';
@@ -8,23 +8,13 @@ import { toast } from 'sonner';
 import moment from 'moment';
 import QuestionField from './QuestionField';
 
-export default function CompleteFormModal({ form, assignment, user, open, onOpenChange, onCompleted }) {
+export default function CompleteFormModal({ form, assignment, open, onOpenChange, onCompleted }) {
   const queryClient = useQueryClient();
   const [answers, setAnswers] = useState({});
   const questions = form?.questions || [];
 
   const submitMutation = useMutation({
-    mutationFn: async (data) => {
-      const submission = await base44.entities.FormSubmission.create(data);
-      if (assignment) {
-        await base44.entities.FormAssignment.update(assignment.id, {
-          status: 'completed',
-          completed_at: new Date().toISOString(),
-          form_submission_id: submission.id,
-        });
-      }
-      return submission;
-    },
+    mutationFn: submitFormResponse,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['form-submissions'] });
       queryClient.invalidateQueries({ queryKey: ['my-submissions'] });
@@ -46,13 +36,9 @@ export default function CompleteFormModal({ form, assignment, user, open, onOpen
     }
     const answerList = questions.map(q => ({ question_id: q.id, question_label: q.label, answer: answers[q.id] ?? '' }));
     submitMutation.mutate({
-      organization_id: user.organization_id,
       form_template_id: form.id,
-      form_title: form.title,
-      employee_email: user.email,
-      employee_name: user.full_name,
+      assignment_id: assignment?.id,
       answers: answerList,
-      submitted_at: new Date().toISOString(),
     });
   };
 

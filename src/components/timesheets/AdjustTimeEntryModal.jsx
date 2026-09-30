@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import moment from 'moment';
-import { SHIFT_LIMIT_HOURS } from '@/lib/shiftLimits';
+import { runTimeEntryCommand } from '@/lib/timeEntries';
 
 export default function AdjustTimeEntryModal({ entry, open, onOpenChange }) {
   const [hours, setHours] = useState('');
@@ -24,10 +23,10 @@ export default function AdjustTimeEntryModal({ entry, open, onOpenChange }) {
   const saveMutation = useMutation({
     mutationFn: () => {
       const totalHours = parseFloat(hours) || 0;
-      return base44.entities.TimeEntry.update(entry.id, {
+      return runTimeEntryCommand('adjust', {
+        entry_id: entry.id,
         total_hours: totalHours,
         break_minutes: parseFloat(breakMins) || 0,
-        is_overtime: totalHours > SHIFT_LIMIT_HOURS,
       });
     },
     onSuccess: () => {

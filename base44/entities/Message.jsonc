@@ -10,6 +10,11 @@
       "type": "string",
       "description": "ID of the conversation"
     },
+    "participant_emails": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Conversation participants copied onto the message for row-level access control"
+    },
     "sender_email": {
       "type": "string"
     },
@@ -45,16 +50,32 @@
   ],
   "rls": {
     "read": {
-      "data.organization_id": "{{user.data.organization_id}}"
+      "$and": [
+        { "data.organization_id": "{{user.data.organization_id}}" },
+        { "data.participant_emails": "{{user.email}}" }
+      ]
     },
     "create": {
-      "data.organization_id": "{{user.data.organization_id}}"
+      "$and": [
+        { "data.organization_id": "{{user.data.organization_id}}" },
+        { "data.sender_email": "{{user.email}}" },
+        { "data.participant_emails": "{{user.email}}" }
+      ]
     },
     "update": {
-      "data.organization_id": "{{user.data.organization_id}}"
+      "$and": [
+        { "data.organization_id": "{{user.data.organization_id}}" },
+        { "data.sender_email": "{{user.email}}" }
+      ]
     },
     "delete": {
-      "data.organization_id": "{{user.data.organization_id}}"
+      "$and": [
+        { "data.organization_id": "{{user.data.organization_id}}" },
+        { "$or": [
+          { "data.sender_email": "{{user.email}}" },
+          { "user_condition": { "role": "admin" } }
+        ] }
+      ]
     }
   }
 }

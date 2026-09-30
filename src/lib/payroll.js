@@ -29,11 +29,11 @@ export function computePayrollLines(entries = [], rates = []) {
     }
     const line = byEmployee[key];
     const hours = entry.total_hours || 0;
-    if (entry.is_overtime) {
-      line.overtime_hours += hours;
-    } else {
-      line.regular_hours += hours;
-    }
+    // `total_hours` is the whole shift. An overtime flag means only the hours
+    // above the standard threshold receive the multiplier, not the entire shift.
+    const overtime = entry.is_overtime ? Math.max(0, hours - 8) : 0;
+    line.regular_hours += Math.max(0, hours - overtime);
+    line.overtime_hours += overtime;
   });
 
   return Object.values(byEmployee)

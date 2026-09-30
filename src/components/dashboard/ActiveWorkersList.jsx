@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, MapPin } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import moment from 'moment';
 

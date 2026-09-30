@@ -64,10 +64,6 @@
       },
       "description": "Invited employees and the profile details to apply when they join"
     },
-    "employee_delete_pin": {
-      "type": "string",
-      "description": "4-digit admin code required to remove an employee from the team directory"
-    },
     "settings": {
       "type": "object",
       "description": "Organization operational settings: capture_gps, overtime_alerts, email_notifications, daily_report_default, late_clockin_alerts, missed_clockout_alerts, tracking_interval_ms"
@@ -87,30 +83,14 @@
         }
       ]
     },
-    "create": {},
+    "create": {
+      "user_condition": { "role": "workspace_service" }
+    },
     "update": {
-      "$or": [
-        {
-          "data.owner_email": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
+      "user_condition": { "role": "workspace_service" }
     },
     "delete": {
-      "$or": [
-        {
-          "data.owner_email": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
+      "data.owner_email": "{{user.email}}"
     }
   }
 }

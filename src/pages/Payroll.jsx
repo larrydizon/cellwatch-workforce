@@ -70,7 +70,7 @@ export default function Payroll() {
       await base44.entities.PayRate.update(existing.id, { hourly_rate: hourlyRate });
     } else {
       await base44.entities.PayRate.create({
-        organization_id: user?.data?.organization_id,
+        organization_id: user?.organization_id,
         employee_email: email,
         employee_name: name,
         hourly_rate: hourlyRate,
@@ -94,7 +94,7 @@ export default function Payroll() {
     setProcessing(true);
     try {
       await base44.entities.PayrollRun.create({
-        organization_id: user?.data?.organization_id,
+        organization_id: user?.organization_id,
         period_start: periodStart,
         period_end: periodEnd,
         status: 'processed',

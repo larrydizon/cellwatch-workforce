@@ -1,5 +1,6 @@
 // Organization-level operational settings, stored on the Organization record.
 // Every toggle on the Settings page reads and writes one of these keys.
+import { runOrganizationCommand } from './organizations';
 
 export const DEFAULT_ORG_SETTINGS = {
   capture_gps: true,
@@ -19,6 +20,6 @@ export function orgSettings(org) {
 export async function saveOrgSettings(base44, orgId, patch) {
   const org = await base44.entities.Organization.get(orgId);
   const merged = { ...(org.settings || {}), ...patch };
-  await base44.entities.Organization.update(orgId, { settings: merged });
+  await runOrganizationCommand('update', { changes: { settings: merged } });
   return merged;
 }

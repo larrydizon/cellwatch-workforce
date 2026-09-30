@@ -40,17 +40,15 @@ export default function Billing() {
   }, []);
 
   const handleSubscribe = async (plan) => {
-    if (!plan.priceId) {
-      toast.error('Add your Stripe price ID in src/lib/plans.js first');
+    if (!plan.checkout) {
+      toast.error(plan.price === null ? 'Contact sales for an enterprise plan' : 'This plan does not require checkout');
       return;
     }
     setSubscribing(plan.key);
     try {
       const res = await base44.functions.invoke('createCheckoutSession', {
-        priceId: plan.priceId,
         plan: plan.key,
-        successUrl: `${window.location.origin}/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
-        cancelUrl: `${window.location.origin}/billing`,
+        returnUrl: window.location.origin,
       });
       window.location.href = res.data.url;
     } catch (e) {

@@ -156,9 +156,6 @@
               "user_condition": {
                 "role": "supervisor"
               }
-            },
-            {
-              "data.assigned_to": "{{user.email}}"
             }
           ]
         }

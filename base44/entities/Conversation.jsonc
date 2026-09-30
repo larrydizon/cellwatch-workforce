@@ -48,16 +48,28 @@
   ],
   "rls": {
     "read": {
-      "data.organization_id": "{{user.data.organization_id}}"
+      "$and": [
+        { "data.organization_id": "{{user.data.organization_id}}" },
+        { "data.participants": "{{user.email}}" }
+      ]
     },
     "create": {
-      "data.organization_id": "{{user.data.organization_id}}"
+      "$and": [
+        { "data.organization_id": "{{user.data.organization_id}}" },
+        { "data.participants": "{{user.email}}" }
+      ]
     },
     "update": {
-      "data.organization_id": "{{user.data.organization_id}}"
+      "$and": [
+        { "data.organization_id": "{{user.data.organization_id}}" },
+        { "data.participants": "{{user.email}}" }
+      ]
     },
     "delete": {
-      "data.organization_id": "{{user.data.organization_id}}"
+      "$and": [
+        { "data.organization_id": "{{user.data.organization_id}}" },
+        { "user_condition": { "role": "admin" } }
+      ]
     }
   }
 }

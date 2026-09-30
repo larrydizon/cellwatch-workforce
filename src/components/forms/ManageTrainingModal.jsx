@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Upload } from 'lucide-react';
 import { toast } from 'sonner';
+import { listDirectoryMembers } from '@/lib/employeeDirectory';
 
 export default function ManageTrainingModal({ open, onOpenChange, user, editingTraining }) {
   const queryClient = useQueryClient();
@@ -25,12 +26,12 @@ export default function ManageTrainingModal({ open, onOpenChange, user, editingT
 
   const { data: users = [] } = useQuery({
     queryKey: ['all-users'],
-    queryFn: () => base44.entities.User.list('-created_date', 200),
+    queryFn: listDirectoryMembers,
     enabled: isAdmin && open,
   });
 
   // Only employees belonging to the current organization
-  const orgUsers = users.filter(u => u.organization_id === user?.organization_id);
+  const orgUsers = users;
 
   useEffect(() => {
     if (!open) return;

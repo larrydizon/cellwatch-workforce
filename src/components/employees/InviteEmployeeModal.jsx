@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { POSITIONS } from '@/components/forms/IndustryTemplates';
-import { upsertDirectoryRecord } from '@/lib/employeeDirectory';
+import { listDirectoryMembers, upsertDirectoryRecord } from '@/lib/employeeDirectory';
 import { logAudit } from '@/lib/auditLog';
+import { runOrganizationCommand } from '@/lib/organizations';
 
 const EMPTY = { full_name: '', email: '', user_level: '', phone: '', position: '', job_title: '' };
 
@@ -70,23 +71,13 @@ export default function InviteEmployeeModal({ open, onOpenChange, organizationId
         job_title: form.job_title,
       };
 
-      // Already registered? Then apply the details to their account too
+      // Re-use an existing directory entry when an invitation is sent again.
       let existing = null;
       try {
-        const users = await base44.entities.User.list('-created_date', 200);
+        const users = await listDirectoryMembers();
         existing = users.find(u => u.email?.toLowerCase() === email) || null;
       } catch {
         existing = null;
-      }
-
-      if (existing) {
-        await base44.entities.User.update(existing.id, {
-          ...details,
-          organization_id: organizationId,
-          role: appRole,
-          user_level: form.user_level,
-          ...(form.full_name ? { full_name: form.full_name } : {}),
-        });
       }
 
       // Add them to the team directory first, so they show up even if the invite cannot be sent
@@ -95,17 +86,16 @@ export default function InviteEmployeeModal({ open, onOpenChange, organizationId
         full_name: form.full_name || existing?.full_name || email,
         role: appRole,
         user_level: form.user_level,
-        ...(existing ? { user_id: existing.id } : {}),
       });
 
       if (!existing) {
         // Keep the details on the organization so they're applied when they accept
         const org = await base44.entities.Organization.get(organizationId);
         const pending = (org.pending_invites || []).filter(p => p.email?.toLowerCase() !== email);
-        await base44.entities.Organization.update(org.id, {
+        await runOrganizationCommand('update', { changes: {
           member_emails: [...new Set([...(org.member_emails || []), email])],
           pending_invites: [...pending, { email, full_name: form.full_name, role: appRole, user_level: form.user_level, ...details }],
-        });
+        } });
       }
 
       // Send the login invite last

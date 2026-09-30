@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { LogOut, AlertTriangle, Clock } from 'lucide-react';
 import moment from 'moment';
 import { toast } from 'sonner';
+import { runTimeEntryCommand } from '@/lib/timeEntries';
 
 const HOUR_OPTIONS = [4, 6, 7, 8, 9, 10, 12, 14, 16];
 
@@ -17,21 +17,12 @@ export default function ForceClockOut({ timeEntries = [] }) {
   const active = timeEntries.filter(t => t.status === 'active');
 
   const forceClockOutMutation = useMutation({
-    mutationFn: async (entry) => {
-      const clockIn = moment(entry.clock_in);
-      const clockOut = moment();
-      const breakMins = entry.break_minutes || 0;
-      const totalHours = Math.max(0, clockOut.diff(clockIn, 'hours', true) - breakMins / 60);
-      return base44.entities.TimeEntry.update(entry.id, {
-        clock_out: clockOut.toISOString(),
+    mutationFn: (entry) =>
+      runTimeEntryCommand('admin_clock_out', {
+        entry_id: entry.id,
         clock_out_lat: entry.clock_in_lat,
         clock_out_lng: entry.clock_in_lng,
-        status: 'pending_approval',
-        total_hours: Math.round(totalHours * 100) / 100,
-        is_overtime: totalHours > 8,
-        notes: `Force clocked out by admin at ${clockOut.format('h:mm A')}`,
-      });
-    },
+      }),
     onSuccess: (_, entry) => {
       queryClient.invalidateQueries({ queryKey: ['dashboard-time-entries'] });
       queryClient.invalidateQueries({ queryKey: ['active-time-entry'] });
@@ -41,19 +32,9 @@ export default function ForceClockOut({ timeEntries = [] }) {
 
   const forceAllMutation = useMutation({
     mutationFn: async (entries) => {
-      await Promise.all(entries.map(entry => {
-        const clockIn = moment(entry.clock_in);
-        const clockOut = moment();
-        const breakMins = entry.break_minutes || 0;
-        const totalHours = Math.max(0, clockOut.diff(clockIn, 'hours', true) - breakMins / 60);
-        return base44.entities.TimeEntry.update(entry.id, {
-          clock_out: clockOut.toISOString(),
-          status: 'pending_approval',
-          total_hours: Math.round(totalHours * 100) / 100,
-          is_overtime: totalHours > 8,
-          notes: `Force clocked out by admin at ${clockOut.format('h:mm A')}`,
-        });
-      }));
+      await Promise.all(entries.map(entry =>
+        runTimeEntryCommand('admin_clock_out', { entry_id: entry.id })
+      ));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard-time-entries'] });

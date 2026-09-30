@@ -1,11 +1,8 @@
 import React from 'react';
-import { Bell, Search, Menu } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Bell, Menu } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Badge } from '@/components/ui/badge';
 import useLiveNotifications from '@/hooks/useLiveNotifications';
 
 export default function TopBar({ user, onMobileMenuOpen }) {

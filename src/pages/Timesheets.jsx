@@ -5,12 +5,12 @@ import { useOutletContext } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Check, X, Clock, Download, FileText, DollarSign, Pencil } from 'lucide-react';
+import { Check, X, Download, FileText, DollarSign, Pencil } from 'lucide-react';
 import moment from 'moment';
 import { toast } from 'sonner';
 import { exportPayrollCSV } from '@/lib/payrollExport';
 import AdjustTimeEntryModal from '@/components/timesheets/AdjustTimeEntryModal';
+import { runTimeEntryCommand } from '@/lib/timeEntries';
 
 const statusBadge = {
   active: "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -45,7 +45,7 @@ export default function Timesheets() {
   });
 
   const approveMutation = useMutation({
-    mutationFn: (id) => base44.entities.TimeEntry.update(id, { status: 'approved', approved_by: user?.email }),
+    mutationFn: (id) => runTimeEntryCommand('approve', { entry_id: id }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['timesheets'] });
       toast.success('Timesheet approved');
@@ -53,7 +53,7 @@ export default function Timesheets() {
   });
 
   const rejectMutation = useMutation({
-    mutationFn: (id) => base44.entities.TimeEntry.update(id, { status: 'rejected' }),
+    mutationFn: (id) => runTimeEntryCommand('reject', { entry_id: id }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['timesheets'] });
       toast.success('Timesheet rejected');

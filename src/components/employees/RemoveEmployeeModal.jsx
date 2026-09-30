@@ -6,57 +6,35 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { runOrganizationCommand } from '@/lib/organizations';
 
 export default function RemoveEmployeeModal({ employee, organizationId, open, onOpenChange }) {
   const queryClient = useQueryClient();
-  const [savedPin, setSavedPin] = useState(null);
-  const [pin, setPin] = useState('');
-  const [confirmPin, setConfirmPin] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [confirmation, setConfirmation] = useState('');
   const [working, setWorking] = useState(false);
 
   useEffect(() => {
     if (!open || !organizationId) return;
-    setPin('');
-    setConfirmPin('');
-    setLoading(true);
-    base44.entities.Organization.get(organizationId)
-      .then(org => setSavedPin(org?.employee_delete_pin || null))
-      .finally(() => setLoading(false));
+    setConfirmation('');
   }, [open, organizationId]);
 
-  const needsSetup = !savedPin;
-
   const handleRemove = async () => {
-    const code = pin.trim();
-    if (!/^\d{4}$/.test(code)) {
-      toast.error('Enter a 4-digit code');
-      return;
-    }
-    if (needsSetup && code !== confirmPin.trim()) {
-      toast.error('The two codes do not match');
-      return;
-    }
-    if (!needsSetup && code !== savedPin) {
-      toast.error('Incorrect admin code');
+    const email = employee.email?.trim().toLowerCase();
+    if (confirmation.trim().toLowerCase() !== email) {
+      toast.error('Enter the employee email exactly');
       return;
     }
 
     setWorking(true);
     try {
-      if (needsSetup) {
-        await base44.entities.Organization.update(organizationId, { employee_delete_pin: code });
-      }
-
       await base44.entities.Employee.delete(employee.directory_id);
 
       // Clear any invite traces so they don't reappear in the directory
       const org = await base44.entities.Organization.get(organizationId);
-      const email = employee.email?.toLowerCase();
-      await base44.entities.Organization.update(organizationId, {
+      await runOrganizationCommand('update', { changes: {
         member_emails: (org.member_emails || []).filter(e => e?.toLowerCase() !== email),
         pending_invites: (org.pending_invites || []).filter(p => p.email?.toLowerCase() !== email),
-      });
+      } });
 
       queryClient.invalidateQueries({ queryKey: ['employees', organizationId] });
       toast.success(`${employee.full_name || employee.email} removed from the team`);
@@ -74,37 +52,20 @@ export default function RemoveEmployeeModal({ employee, organizationId, open, on
           <DialogTitle>Remove Employee</DialogTitle>
           <DialogDescription>
             This removes {employee?.full_name || employee?.email} from the team directory.
-            {needsSetup
-              ? ' Create a 4-digit admin code first — only share it with administrators.'
-              : ' Enter the 4-digit admin code to confirm.'}
+            Enter the employee email to confirm this action.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
           <div className="space-y-2">
-            <Label>{needsSetup ? 'Create Admin Code' : 'Admin Code'}</Label>
+            <Label>Employee email</Label>
             <Input
-              type="password"
-              inputMode="numeric"
-              maxLength={4}
-              placeholder="••••"
-              value={pin}
-              onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+              type="email"
+              placeholder={employee?.email || 'employee@example.com'}
+              value={confirmation}
+              onChange={e => setConfirmation(e.target.value)}
             />
           </div>
-          {needsSetup && (
-            <div className="space-y-2">
-              <Label>Confirm Admin Code</Label>
-              <Input
-                type="password"
-                inputMode="numeric"
-                maxLength={4}
-                placeholder="••••"
-                value={confirmPin}
-                onChange={e => setConfirmPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-              />
-            </div>
-          )}
         </div>
 
         <DialogFooter>
@@ -112,7 +73,7 @@ export default function RemoveEmployeeModal({ employee, organizationId, open, on
           <Button
             variant="destructive"
             onClick={handleRemove}
-            disabled={working || loading || pin.length !== 4}
+            disabled={working || confirmation.trim().toLowerCase() !== employee?.email?.trim().toLowerCase()}
           >
             {working ? 'Removing...' : 'Remove Employee'}
           </Button>

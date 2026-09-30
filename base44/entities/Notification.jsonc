@@ -45,16 +45,36 @@
   ],
   "rls": {
     "read": {
-      "data.organization_id": "{{user.data.organization_id}}"
+      "$and": [
+        { "data.organization_id": "{{user.data.organization_id}}" },
+        { "data.recipient_email": "{{user.email}}" }
+      ]
     },
     "create": {
-      "data.organization_id": "{{user.data.organization_id}}"
+      "$and": [
+        { "data.organization_id": "{{user.data.organization_id}}" },
+        { "$or": [
+          { "data.recipient_email": "{{user.email}}" },
+          { "user_condition": { "role": "admin" } },
+          { "user_condition": { "role": "operations_manager" } },
+          { "user_condition": { "role": "supervisor" } }
+        ] }
+      ]
     },
     "update": {
-      "data.organization_id": "{{user.data.organization_id}}"
+      "$and": [
+        { "data.organization_id": "{{user.data.organization_id}}" },
+        { "data.recipient_email": "{{user.email}}" }
+      ]
     },
     "delete": {
-      "data.organization_id": "{{user.data.organization_id}}"
+      "$and": [
+        { "data.organization_id": "{{user.data.organization_id}}" },
+        { "$or": [
+          { "data.recipient_email": "{{user.email}}" },
+          { "user_condition": { "role": "admin" } }
+        ] }
+      ]
     }
   }
 }

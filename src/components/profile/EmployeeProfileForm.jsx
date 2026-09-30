@@ -56,11 +56,8 @@ export default function EmployeeProfileForm({ targetUser, viewer, onSaved }) {
       const roleChange = canEditAdminFields && level ? { role: level.is_admin ? 'admin' : 'user' } : {};
       if (isSelf) {
         await base44.auth.updateMe(payload);
-      } else if (targetUser.user_id) {
-        // Only people who already have an account can be updated there
-        await base44.entities.User.update(targetUser.id, { ...payload, ...roleChange });
       }
-      // Keep the directory record in step with the profile
+      // The server keeps the directory and any linked account in step.
       const accountId = isSelf ? targetUser.id : (targetUser.user_id || null);
       await syncEmployeeRecord({ ...targetUser, ...payload, ...roleChange }, viewer?.organization_id, accountId);
       queryClient.invalidateQueries({ queryKey: ['employees'] });
