@@ -3,10 +3,11 @@ import { base44 } from '@/api/base44Client';
 import { useOutletContext } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, Sparkles } from 'lucide-react';
+import { AlertTriangle, ExternalLink } from 'lucide-react';
 import { PLANS } from '@/lib/plans';
 import { toast } from 'sonner';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import PlanCard from '@/components/billing/PlanCard';
 
 const planLabels = { free: 'Free', starter: 'Starter', pro: 'Pro', enterprise: 'Enterprise' };
 const statusColors = {
@@ -20,6 +21,7 @@ export default function Billing() {
   const { user } = useOutletContext();
   const queryClient = useQueryClient();
   const [subscribing, setSubscribing] = useState(null);
+  const [openingPortal, setOpeningPortal] = useState(false);
 
   const { data: org } = useQuery({
     queryKey: ['my-org', user?.organization_id],
@@ -27,15 +29,26 @@ export default function Billing() {
     enabled: !!user?.organization_id,
   });
 
+  // Returning from Checkout or from the billing portal: the webhook is the
+  // source of truth, so re-read the organization and clear the URL.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const sessionId = params.get('session_id');
+    const fromPortal = params.get('portal');
+
     if (sessionId) {
       base44.functions.invoke('confirmSubscription', { sessionId }).then(() => {
         queryClient.invalidateQueries({ queryKey: ['my-org'] });
         toast.success('Subscription activated!');
         window.history.replaceState({}, '', '/billing');
       }).catch(() => toast.error('Could not confirm subscription'));
+      return;
+    }
+
+    if (fromPortal) {
+      queryClient.invalidateQueries({ queryKey: ['my-org'] });
+      toast.success('Billing updated');
+      window.history.replaceState({}, '', '/billing');
     }
   }, []);
 
@@ -57,7 +70,20 @@ export default function Billing() {
     setSubscribing(null);
   };
 
+  // Card, invoices and cancellation all live in the provider's hosted portal.
+  const handleManageBilling = async () => {
+    setOpeningPortal(true);
+    try {
+      const res = await base44.functions.invoke('createPortalSession', { returnUrl: window.location.origin });
+      window.location.href = res.data.url;
+    } catch (e) {
+      toast.error(e.response?.data?.error || 'Could not open the billing portal');
+    }
+    setOpeningPortal(false);
+  };
+
   const isOwner = org?.owner_email === user?.email;
+  const periodEnd = org?.current_period_end ? new Date(org.current_period_end).toLocaleDateString() : null;
 
   return (
     <div className="space-y-6">
@@ -74,13 +100,29 @@ export default function Billing() {
               {isOwner ? 'You own this organization' : `Owner: ${org.owner_email}`}
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <div className="text-right">
               <p className="text-xs text-muted-foreground">Current plan</p>
               <p className="font-semibold">{planLabels[org.plan] || org.plan}</p>
             </div>
             <Badge className={statusColors[org.plan_status] || ''}>{org.plan_status}</Badge>
+            {isOwner && org.stripe_customer_id && (
+              <Button variant="outline" size="sm" className="gap-2" onClick={handleManageBilling} disabled={openingPortal}>
+                <ExternalLink className="h-4 w-4" />
+                {openingPortal ? 'Opening…' : 'Manage billing'}
+              </Button>
+            )}
           </div>
+        </div>
+      )}
+
+      {org?.cancel_at_period_end && (
+        <div className="flex items-start gap-3 rounded-lg border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-warning">
+          <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+          <p>
+            Your subscription is cancelled and the workspace moves to the Free plan
+            {periodEnd ? ` on ${periodEnd}` : ' when the paid period ends'}. Open Manage billing to restart it.
+          </p>
         </div>
       )}
 
@@ -88,33 +130,9 @@ export default function Billing() {
         {PLANS.map(plan => {
           const isCurrent = org?.plan === plan.key;
           return (
-            <div
-              key={plan.key}
-              className={`bg-card rounded-xl border p-5 flex flex-col ${plan.highlighted ? 'border-primary ring-1 ring-primary' : 'border-border'}`}
-            >
-              <div className="flex items-center justify-between">
-                <p className="font-semibold">{plan.name}</p>
-                {plan.highlighted && (
-                  <Badge className="bg-primary/10 text-primary"><Sparkles className="h-3 w-3 mr-1" />Popular</Badge>
-                )}
-              </div>
-              <p className="text-2xl font-bold mt-2">
-                {plan.price === null ? 'Custom' : `$${plan.price}`}
-                {plan.price !== null && <span className="text-sm font-normal text-muted-foreground">/{plan.period}</span>}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">{plan.description}</p>
-              <p className="text-xs text-muted-foreground mt-1">{plan.seats ? `${plan.seats} employees` : 'Unlimited employees'}</p>
-
-              <ul className="space-y-1.5 mt-4 flex-1">
-                {plan.features.map(f => (
-                  <li key={f} className="flex items-start gap-2 text-sm">
-                    <Check className="h-4 w-4 text-success flex-shrink-0 mt-0.5" /> <span>{f}</span>
-                  </li>
-                ))}
-              </ul>
-
+            <PlanCard key={plan.key} plan={plan}>
               <Button
-                className="w-full mt-4"
+                className="w-full"
                 variant={plan.highlighted ? 'default' : 'outline'}
                 disabled={isCurrent || subscribing !== null || (org && !isOwner)}
                 onClick={() => handleSubscribe(plan)}
@@ -125,7 +143,7 @@ export default function Billing() {
                   : subscribing === plan.key ? 'Redirecting...'
                   : `Subscribe to ${plan.name}`}
               </Button>
-            </div>
+            </PlanCard>
           );
         })}
       </div>

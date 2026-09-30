@@ -46,6 +46,11 @@
       "format": "date-time",
       "description": "End of the current paid billing period, kept in sync by Stripe"
     },
+    "cancel_at_period_end": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when the owner has cancelled but the paid period has not ended yet"
+    },
     "owner_email": {
       "type": "string",
       "description": "Email of the user who owns this organization"
@@ -84,10 +89,14 @@
       ]
     },
     "create": {
-      "user_condition": { "role": "workspace_service" }
+      "user_condition": {
+        "role": "workspace_service"
+      }
     },
     "update": {
-      "user_condition": { "role": "workspace_service" }
+      "user_condition": {
+        "role": "workspace_service"
+      }
     },
     "delete": {
       "data.owner_email": "{{user.email}}"

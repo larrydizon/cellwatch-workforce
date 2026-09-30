@@ -40,7 +40,7 @@ export default function SubscriptionSeatPanel({ orgState, onAddSeat }) {
           )}
           {org?.current_period_end && (
             <p className="text-xs text-muted-foreground mt-1 font-mono">
-              Renews {new Date(org.current_period_end).toLocaleDateString()}
+              {org.cancel_at_period_end ? 'Ends' : 'Renews'} {new Date(org.current_period_end).toLocaleDateString()}
             </p>
           )}
         </div>

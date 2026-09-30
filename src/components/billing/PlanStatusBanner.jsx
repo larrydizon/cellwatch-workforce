@@ -6,7 +6,8 @@ import { cn } from '@/lib/utils';
 // Slim alert shown across the app only when the organization needs attention:
 // trial about to lapse, subscription lapsed (read-only), or seats full.
 export default function PlanStatusBanner({ orgState }) {
-  const { status, trialDaysLeft, trialExpired, isReadOnly, seatsFull, seatLimit, planName } = orgState;
+  const { status, trialDaysLeft, trialExpired, isReadOnly, seatsFull, seatLimit, planName, org } = orgState;
+  const periodEnd = org?.current_period_end ? new Date(org.current_period_end).toLocaleDateString() : null;
 
   let tone = null;
   let message = null;
@@ -16,6 +17,9 @@ export default function PlanStatusBanner({ orgState }) {
     message = status === 'past_due'
       ? 'Your last payment failed — the workspace is read-only until billing is updated.'
       : 'Your trial has ended — the workspace is read-only until you choose a plan.';
+  } else if (org?.cancel_at_period_end) {
+    tone = 'warning';
+    message = `Your subscription is cancelled — the workspace moves to the Free plan${periodEnd ? ` on ${periodEnd}` : ' when the paid period ends'}.`;
   } else if (status === 'trial' && trialDaysLeft !== null && trialDaysLeft <= 7) {
     tone = 'warning';
     message = trialExpired

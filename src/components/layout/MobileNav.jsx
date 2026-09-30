@@ -4,7 +4,7 @@ import { LayoutDashboard, Briefcase, Clock, UmbrellaOff, MessageSquare, CreditCa
 import { cn } from '@/lib/utils';
 
 const employeeItems = [
-  { label: 'Home', icon: LayoutDashboard, path: '/' },
+  { label: 'Home', icon: LayoutDashboard, path: '/dashboard' },
   { label: 'Jobs', icon: Briefcase, path: '/jobs' },
   { label: 'Clock', icon: Clock, path: '/time-clock' },
   { label: 'Leave', icon: UmbrellaOff, path: '/leave' },
@@ -13,7 +13,7 @@ const employeeItems = [
 
 // Admins land on the operational command floor, so their thumb bar reflects it.
 const adminItems = [
-  { label: 'Overview', icon: LayoutDashboard, path: '/' },
+  { label: 'Overview', icon: LayoutDashboard, path: '/dashboard' },
   { label: 'Billing', icon: CreditCard, path: '/billing' },
   { label: 'Audit', icon: ScrollText, path: '/audit-log' },
   { label: 'Settings', icon: SettingsIcon, path: '/settings' },

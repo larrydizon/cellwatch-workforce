@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { Briefcase } from 'lucide-react';
 import { syncEmployeeRecord } from '@/lib/employeeDirectory';
 import { runOrganizationCommand } from '@/lib/organizations';
+import { PLANS } from '@/lib/plans';
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -16,10 +17,16 @@ export default function Onboarding() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
+  // The plan chosen on the public pricing page, carried through sign-up.
+  const selectedPlan = new URLSearchParams(window.location.search).get('plan')
+    || localStorage.getItem('signup_plan')
+    || 'free';
+  const selectedPlanName = (PLANS.find(p => p.key === selectedPlan) || PLANS[0]).name;
+
   useEffect(() => {
     base44.auth.me().then(async u => {
       setUser(u);
-      if (u?.organization_id) { navigate('/', { replace: true }); return; }
+      if (u?.organization_id) { navigate('/dashboard', { replace: true }); return; }
       // If the user was invited to an organization, join it instead of creating a new one
       try {
         const response = await base44.functions.invoke('organizationCommand', { action: 'claim_invite' });
@@ -37,7 +44,7 @@ export default function Onboarding() {
             });
           }
           await syncEmployeeRecord(await base44.auth.me(), org.id);
-          navigate('/', { replace: true });
+          navigate('/dashboard', { replace: true });
           return;
         }
       } catch (e) {
@@ -53,11 +60,12 @@ export default function Onboarding() {
     if (!orgName.trim()) { toast.error('Enter an organization name'); return; }
     setSubmitting(true);
     try {
-      const org = await runOrganizationCommand('create_workspace', { name: orgName.trim() });
+      const org = await runOrganizationCommand('create_workspace', { name: orgName.trim(), plan: selectedPlan });
+      localStorage.removeItem('signup_plan');
       await base44.auth.updateMe({ organization_id: org.id });
       await syncEmployeeRecord(await base44.auth.me(), org.id);
       toast.success('Organization created');
-      navigate('/', { replace: true });
+      navigate('/dashboard', { replace: true });
     } catch (e) {
       toast.error('Failed to create organization');
     }
@@ -110,7 +118,7 @@ export default function Onboarding() {
           </Button>
 
           <p className="text-xs text-muted-foreground text-center">
-            You'll start on a 14-day Free trial. Add billing anytime from the Billing page.
+            You'll start on a 14-day {selectedPlanName} trial — no payment taken. Add billing anytime from the Billing page.
           </p>
         </div>
       </div>

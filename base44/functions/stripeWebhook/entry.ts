@@ -1,7 +1,6 @@
 import Stripe from 'npm:stripe@17.7.0';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
-
-const SEATS: Record<string, number> = { free: 5, starter: 15, pro: 50 };
+import { planSeatLimit } from '../../shared/plans.ts';
 
 export default async function (req: Request): Promise<Response> {
   const stripeSecret = Deno.env.get('STRIPE_SECRET_KEY');
@@ -36,13 +35,26 @@ export default async function (req: Request): Promise<Response> {
       await svc.entities.Organization.update(org.id, {
         plan,
         plan_status: 'active',
-        seat_limit: SEATS[plan] ?? org.seat_limit,
+        seat_limit: planSeatLimit(plan) ?? org.seat_limit,
+        cancel_at_period_end: false,
         stripe_customer_id: String(object.customer),
         stripe_subscription_id: String(object.subscription),
       });
     }
 
-    if (event.type.startsWith('customer.subscription.')) {
+    // The subscription has actually ended: the workspace falls back to the free
+    // plan and its seat limit. Nothing is deleted, so an over-limit workspace
+    // stays usable — the seat gauge flags it and points at an upgrade.
+    if (event.type === 'customer.subscription.deleted') {
+      await svc.entities.Organization.update(org.id, {
+        plan: 'free',
+        plan_status: 'active',
+        seat_limit: planSeatLimit('free'),
+        cancel_at_period_end: false,
+      });
+    }
+
+    if (event.type.startsWith('customer.subscription.') && event.type !== 'customer.subscription.deleted') {
       const plan = object.metadata?.plan || org.plan;
       const status = object.status === 'active' || object.status === 'trialing'
         ? 'active'
@@ -52,8 +64,10 @@ export default async function (req: Request): Promise<Response> {
       await svc.entities.Organization.update(org.id, {
         plan,
         plan_status: status,
-        seat_limit: SEATS[plan] ?? org.seat_limit,
+        seat_limit: planSeatLimit(plan) ?? org.seat_limit,
         stripe_subscription_id: object.id,
+        // Set while the period is still running, so the app can show the end date.
+        cancel_at_period_end: Boolean(object.cancel_at_period_end),
         current_period_end: object.current_period_end
           ? new Date(object.current_period_end * 1000).toISOString()
           : org.current_period_end,

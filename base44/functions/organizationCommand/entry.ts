@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
+import { normalizePlan, planSeatLimit } from '../../shared/plans.ts';
 
 const MANAGER_ROLES = new Set(['admin', 'operations_manager', 'supervisor']);
 const UPDATE_FIELDS = new Set(['name', 'settings', 'member_emails', 'pending_invites']);
@@ -37,14 +38,17 @@ export default async function (req: Request): Promise<Response> {
       if (user.organization_id) return Response.json({ error: 'User already has a workspace' }, { status: 409 });
       const name = String(body.name || '').trim().slice(0, 120);
       if (!name) return Response.json({ error: 'Organization name is required' }, { status: 400 });
+      // The plan chosen on the public pricing page carries through sign-up: the
+      // workspace starts on a trial at that plan's seat limit, with no payment taken.
+      const plan = normalizePlan(body.plan);
       const organization = await svc.entities.Organization.create({
         name,
         owner_email: user.email,
         member_emails: [user.email],
         pending_invites: [],
-        plan: 'free',
+        plan,
         plan_status: 'trial',
-        seat_limit: 5,
+        seat_limit: planSeatLimit(plan) ?? 5,
         trial_ends_at: new Date(Date.now() + 14 * 86400000).toISOString(),
       });
       return Response.json({ organization });

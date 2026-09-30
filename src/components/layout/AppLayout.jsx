@@ -22,7 +22,7 @@ import useOrganization from '@/hooks/useOrganization';
 import useLiveNotifications from '@/hooks/useLiveNotifications';
 
 const mobileNavItems = [
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
   { label: 'Admin View', icon: LayoutGrid, path: '/admin-overview', adminOnly: true },
   { label: 'Employees', icon: Users, path: '/employees', ownerOnly: true },
   { label: 'My Profile', icon: UserIcon, path: '/profile' },
