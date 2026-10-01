@@ -2,7 +2,10 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 
 const MANAGER_ROLES = new Set(['admin', 'operations_manager', 'supervisor']);
 // Consent is personal: an employee records it for themselves, never for someone else.
-const CONSENT_FIELDS = ['location_consent', 'location_consent_at'];
+const CONSENT_FIELDS = [
+  'location_consent', 'location_consent_at',
+  'presence_consent', 'presence_consent_at',
+];
 const SELF_FIELDS = new Set([
   'full_name', 'phone', 'address', 'job_title', 'position', 'team', 'skills',
   'emergency_contact_name', 'emergency_contact_phone',
@@ -13,6 +16,7 @@ const MANAGER_FIELDS = new Set([
   ...SELF_FIELDS, 'user_id', 'role', 'user_level', 'employment_type',
   'contract_type', 'ird_number', 'hourly_rate', 'overtime_multiplier',
   'daily_report_required', 'is_active',
+  'office_remote', 'presence_camera', 'presence_location', 'presence_device',
 ]);
 const USER_FIELDS = new Set([
   'full_name', 'phone', 'address', 'job_title', 'position', 'team', 'skills',
