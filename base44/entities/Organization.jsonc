@@ -71,7 +71,7 @@
     },
     "settings": {
       "type": "object",
-      "description": "Organization operational settings: capture_gps, overtime_alerts, email_notifications, daily_report_default, late_clockin_alerts, missed_clockout_alerts, tracking_interval_ms"
+      "description": "Organization operational settings: capture_gps, overtime_alerts, email_notifications, daily_report_default, late_clockin_alerts, missed_clockout_alerts, tracking_interval_ms, presence_checks_enabled, presence_camera, presence_location, presence_device, presence_interval_ms"
     }
   },
   "required": [

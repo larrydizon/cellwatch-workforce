@@ -31,6 +31,10 @@ export function employeeRecordFromUser(user, organizationId) {
     photos: form.photos,
     custom_fields: form.customFields,
     daily_report_required: form.daily_report_required,
+    office_remote: form.office_remote,
+    presence_camera: form.presence_camera,
+    presence_location: form.presence_location,
+    presence_device: form.presence_device,
   };
 }
 

@@ -21,6 +21,7 @@ import Settings from '@/pages/Settings';
 import Leave from '@/pages/Leave';
 import AdminOverview from '@/pages/AdminOverview';
 import Forms from '@/pages/Forms';
+import LocationHistory from '@/pages/LocationHistory';
 import DailyReports from '@/pages/DailyReports';
 import AuditLog from '@/pages/AuditLog';
 import MyForms from '@/pages/MyForms';
@@ -76,6 +77,7 @@ const AuthenticatedApp = () => {
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/jobs" element={<Jobs />} />
           <Route path="/time-clock" element={<TimeClock />} />
+          <Route path="/location-history" element={<LocationHistory />} />
           <Route path="/timesheets" element={<Timesheets />} />
           <Route path="/daily-reports" element={<DailyReports />} />
           <Route path="/audit-log" element={<AuditLog />} />

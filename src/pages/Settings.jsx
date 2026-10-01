@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Shield, MapPin, Bell, Clock } from 'lucide-react';
+import { Shield, MapPin, Bell, Clock, Camera } from 'lucide-react';
 import { toast } from 'sonner';
 import { saveOrgSettings } from '@/lib/orgSettings';
 import { logAudit } from '@/lib/auditLog';
@@ -21,6 +21,16 @@ const INTERVAL_OPTIONS = [
   { label: 'Every 1 minute', value: '60000' },
   { label: 'Every 2 minutes', value: '120000' },
   { label: 'Every 5 minutes', value: '300000' },
+];
+
+// Presence checks are deliberately coarser than the field GPS interval — a
+// snapshot every few seconds would be unusable for everyone involved.
+const PRESENCE_INTERVAL_OPTIONS = [
+  { label: 'Every 5 minutes', value: '300000' },
+  { label: 'Every 10 minutes', value: '600000' },
+  { label: 'Every 15 minutes', value: '900000' },
+  { label: 'Every 30 minutes', value: '1800000' },
+  { label: 'Every 1 hour', value: '3600000' },
 ];
 
 export default function Settings() {
@@ -105,6 +115,61 @@ export default function Settings() {
               </SelectTrigger>
               <SelectContent>
                 {INTERVAL_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Camera className="h-5 w-5 text-primary" /> Office &amp; Remote Presence Checks
+          </CardTitle>
+          <CardDescription>
+            How office and remote workers confirm they are at work while being paid by the hour.
+            Each employee is flagged individually on their profile, and every check needs their
+            one-time consent before anything is captured.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Toggle
+            settingKey="presence_checks_enabled"
+            label="Presence checks"
+            hint="Master switch — nothing is captured for anyone while this is off"
+          />
+          <Toggle
+            settingKey="presence_camera"
+            label="Camera snapshot"
+            hint="Capture a still photo from the front camera at each check"
+          />
+          <Toggle
+            settingKey="presence_location"
+            label="Device location"
+            hint="Record where the device was when the check ran"
+          />
+          <Toggle
+            settingKey="presence_device"
+            label="Device identity"
+            hint="Record which device the check came from, so a swap mid-shift is visible"
+          />
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <Label>Presence check interval</Label>
+              <p className="text-xs text-muted-foreground mt-0.5">How often a check runs while an office or remote worker is clocked in</p>
+            </div>
+            <Select
+              value={String(settings.presence_interval_ms ?? 900000)}
+              onValueChange={(v) => update('presence_interval_ms', Number(v), 'Presence check interval')}
+              disabled={!canEdit}
+            >
+              <SelectTrigger className="w-44">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PRESENCE_INTERVAL_OPTIONS.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                 ))}
               </SelectContent>

@@ -1,12 +1,13 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Briefcase, Clock, UmbrellaOff, MessageSquare, CreditCard, ScrollText, Settings as SettingsIcon } from 'lucide-react';
+import { LayoutDashboard, Briefcase, Clock, UmbrellaOff, MessageSquare, CreditCard, ScrollText, Settings as SettingsIcon, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const employeeItems = [
   { label: 'Home', icon: LayoutDashboard, path: '/dashboard' },
   { label: 'Jobs', icon: Briefcase, path: '/jobs' },
   { label: 'Clock', icon: Clock, path: '/time-clock' },
+  { label: 'History', icon: MapPin, path: '/location-history' },
   { label: 'Leave', icon: UmbrellaOff, path: '/leave' },
   { label: 'Chat', icon: MessageSquare, path: '/chat' },
 ];

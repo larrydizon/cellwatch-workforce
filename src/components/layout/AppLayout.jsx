@@ -11,7 +11,7 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Calendar, Briefcase, Clock,
-  FileText, MessageSquare, Settings, Bell, UmbrellaOff, LayoutGrid, ClipboardList, CreditCard, User as UserIcon
+  FileText, MessageSquare, Settings, Bell, UmbrellaOff, LayoutGrid, ClipboardList, CreditCard, User as UserIcon, MapPin
 } from 'lucide-react';
 import useShiftReminders from '@/hooks/useShiftReminders';
 import useAutoClockOut from '@/hooks/useAutoClockOut';
@@ -22,6 +22,7 @@ import useOrganization from '@/hooks/useOrganization';
 import useLiveNotifications from '@/hooks/useLiveNotifications';
 import { LocationConsentProvider } from '@/lib/LocationConsentContext';
 import LocationConsentNotice from '@/components/timeclock/LocationConsentNotice';
+import PresenceConsentNotice from '@/components/timeclock/PresenceConsentNotice';
 
 const mobileNavItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
@@ -31,6 +32,7 @@ const mobileNavItems = [
   { label: 'Schedule', icon: Calendar, path: '/schedule' },
   { label: 'Jobs', icon: Briefcase, path: '/jobs' },
   { label: 'Time Clock', icon: Clock, path: '/time-clock' },
+  { label: 'Location History', icon: MapPin, path: '/location-history' },
   { label: 'Timesheets', icon: FileText, path: '/timesheets' },
   { label: 'Leave', icon: UmbrellaOff, path: '/leave' },
   { label: 'Forms', icon: ClipboardList, path: '/forms', adminOnly: true },
@@ -152,6 +154,7 @@ export default function AppLayout() {
           <LocationConsentProvider user={user}>
             <Outlet context={{ user }} />
             <LocationConsentNotice />
+            <PresenceConsentNotice />
           </LocationConsentProvider>
         </main>
       </div>

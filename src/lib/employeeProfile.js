@@ -77,10 +77,14 @@ export function buildProfileForm(user) {
     user_level: user?.user_level || '',
     role: user?.role || 'user',
     daily_report_required: user?.daily_report_required ?? false,
+    office_remote: user?.office_remote ?? false,
+    presence_camera: user?.presence_camera ?? false,
+    presence_location: user?.presence_location ?? false,
+    presence_device: user?.presence_device ?? false,
   };
 }
 
-export function buildProfilePayload(form, { userLevel = false, pay = false } = {}) {
+export function buildProfilePayload(form, { userLevel = false, pay = false, presence = false } = {}) {
   const payload = {
     phone: form.phone,
     address: form.address,
@@ -104,6 +108,13 @@ export function buildProfilePayload(form, { userLevel = false, pay = false } = {
     payload.contract_type = form.contract_type || undefined;
     payload.hourly_rate = form.hourly_rate === '' ? undefined : Number(form.hourly_rate);
     payload.overtime_multiplier = form.overtime_multiplier === '' ? undefined : Number(form.overtime_multiplier);
+  }
+
+  if (presence) {
+    payload.office_remote = !!form.office_remote;
+    payload.presence_camera = !!form.presence_camera;
+    payload.presence_location = !!form.presence_location;
+    payload.presence_device = !!form.presence_device;
   }
 
   return payload;

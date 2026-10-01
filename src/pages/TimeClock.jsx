@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useOutletContext } from 'react-router-dom';
@@ -15,13 +15,9 @@ import DailyReportModal from '@/components/reports/DailyReportModal';
 import { runTimeEntryCommand } from '@/lib/timeEntries';
 import useOrganization from '@/hooks/useOrganization';
 import { useLocationConsent } from '@/lib/LocationConsentContext';
-
-const TRACKING_INTERVAL_KEY = 'location_tracking_interval_ms';
-
-function getTrackingInterval() {
-  const val = localStorage.getItem(TRACKING_INTERVAL_KEY);
-  return val ? parseInt(val, 10) : 0; // 0 = disabled
-}
+import useLocationTrail from '@/hooks/useLocationTrail';
+import usePresenceChecks from '@/hooks/usePresenceChecks';
+import ShiftTrackingStatus from '@/components/timeclock/ShiftTrackingStatus';
 
 export default function TimeClock() {
   const { user } = useOutletContext();
@@ -36,7 +32,6 @@ export default function TimeClock() {
   const [showPreStartForms, setShowPreStartForms] = useState(false);
   const [showDailyReport, setShowDailyReport] = useState(false);
   const queryClient = useQueryClient();
-  const trackingRef = useRef(null);
 
   // Live clock
   useEffect(() => {
@@ -52,21 +47,6 @@ export default function TimeClock() {
       (pos) => setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
       () => {}
     );
-  }, [trackLocation]);
-
-  // Live location tracking interval (from Settings preference)
-  useEffect(() => {
-    const interval = getTrackingInterval();
-    if (!trackLocation || !interval || !navigator.geolocation) return;
-
-    trackingRef.current = setInterval(() => {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        () => {}
-      );
-    }, interval);
-
-    return () => clearInterval(trackingRef.current);
   }, [trackLocation]);
 
   const { data: activeEntry } = useQuery({
@@ -153,6 +133,40 @@ export default function TimeClock() {
   });
 
   const needsDailyReport = !!myDirectoryRecord?.daily_report_required && !todayReport;
+
+  // ── Shift tracking ──
+  // The recording interval is read from the workspace record, so the number the
+  // admin picks in Settings is the number that actually runs.
+  const { lastPointAt } = useLocationTrail({
+    enabled: trackLocation && !!activeEntry,
+    entryId: activeEntry?.id,
+    intervalMs: Number(orgState.settings.tracking_interval_ms) || 0,
+  });
+
+  const presenceEnabled = !!myDirectoryRecord?.office_remote
+    && !!myDirectoryRecord?.presence_consent
+    && !!orgState.settings.presence_checks_enabled;
+
+  const { lastCheck } = usePresenceChecks({
+    enabled: presenceEnabled && !!activeEntry,
+    entryId: activeEntry?.id,
+    intervalMs: Number(orgState.settings.presence_interval_ms) || 0,
+    camera: !!myDirectoryRecord?.presence_camera && !!orgState.settings.presence_camera,
+    location: !!myDirectoryRecord?.presence_location && !!orgState.settings.presence_location,
+    device: !!myDirectoryRecord?.presence_device && !!orgState.settings.presence_device,
+  });
+
+  const { data: trailPointCount = 0 } = useQuery({
+    queryKey: ['trail-count', activeEntry?.id, lastPointAt],
+    queryFn: () => base44.entities.LocationPoint.count({ time_entry_id: activeEntry.id }),
+    enabled: !!activeEntry?.id,
+  });
+
+  const { data: presenceCheckCount = 0 } = useQuery({
+    queryKey: ['presence-count', activeEntry?.id, lastCheck?.id],
+    queryFn: () => base44.entities.PresenceCheck.count({ time_entry_id: activeEntry.id }),
+    enabled: !!activeEntry?.id,
+  });
 
   const clockInMutation = useMutation({
     mutationFn: async () => {
@@ -266,6 +280,13 @@ export default function TimeClock() {
           {isOnBreak && (
             <p className="text-sm text-amber-600 font-medium">On break</p>
           )}
+          <ShiftTrackingStatus
+            trailPoints={trailPointCount}
+            presenceEnabled={presenceEnabled}
+            presenceChecks={presenceCheckCount}
+            lastCheckAt={lastCheck?.captured_at}
+            lastCheckType={lastCheck?.check_type}
+          />
           {/* Clock-in location */}
           {activeEntry.clock_in_lat && (
             <div className="pt-2 border-t border-success/20">

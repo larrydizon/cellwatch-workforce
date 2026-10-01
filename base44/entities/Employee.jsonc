@@ -95,6 +95,36 @@
       "type": "string",
       "format": "date-time",
       "description": "When the employee made their location-tracking choice. Presence means they have already been asked."
+    },
+    "office_remote": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when this person works at a desk or from home rather than in the field"
+    },
+    "presence_camera": {
+      "type": "boolean",
+      "default": false,
+      "description": "Include a camera snapshot in this employee's presence checks"
+    },
+    "presence_location": {
+      "type": "boolean",
+      "default": false,
+      "description": "Include a device location reading in this employee's presence checks"
+    },
+    "presence_device": {
+      "type": "boolean",
+      "default": false,
+      "description": "Record the device identity with this employee's presence checks"
+    },
+    "presence_consent": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when the employee has agreed to office/remote presence checks. Only the employee can set this for themselves."
+    },
+    "presence_consent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the employee made their presence-check choice. Presence means they have already been asked."
     }
   },
   "required": [

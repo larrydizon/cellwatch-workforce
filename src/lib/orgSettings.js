@@ -11,6 +11,12 @@ export const DEFAULT_ORG_SETTINGS = {
   in_app_notifications: true,
   email_notifications: true,
   daily_report_default: false,
+  // Office / remote presence checks — separate from field GPS tracking
+  presence_checks_enabled: false,
+  presence_camera: true,
+  presence_location: true,
+  presence_device: true,
+  presence_interval_ms: 900000,
 };
 
 export function orgSettings(org) {
