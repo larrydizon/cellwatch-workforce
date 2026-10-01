@@ -25,6 +25,7 @@ import DailyReports from '@/pages/DailyReports';
 import AuditLog from '@/pages/AuditLog';
 import MyForms from '@/pages/MyForms';
 import Onboarding from '@/pages/Onboarding';
+import OwnerConsole from '@/pages/OwnerConsole';
 import Billing from '@/pages/Billing';
 import Payroll from '@/pages/Payroll';
 import Landing from '@/pages/Landing';
@@ -66,6 +67,7 @@ const AuthenticatedApp = () => {
         element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}
       >
         <Route path="/onboarding" element={<Onboarding />} />
+        <Route path="/owner-console" element={<OwnerConsole />} />
         <Route element={<AppLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/employees" element={<Employees />} />
