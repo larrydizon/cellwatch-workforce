@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Sidebar from './Sidebar';
 import MobileNav from './MobileNav';
 import TopBar from './TopBar';
@@ -64,7 +64,9 @@ export default function AppLayout() {
   useLiveNotifications(user);
   const overtimeEntry = useOvertimePrompt(user);
 
-  const { data: levels = [] } = useQuery({
+  const queryClient = useQueryClient();
+
+  const { data: levels = [], isLoading: levelsLoading } = useQuery({
     queryKey: ['user-levels', user?.organization_id],
     queryFn: () => base44.entities.UserLevel.filter({ organization_id: user.organization_id }, 'created_date', 100),
     enabled: !!user?.organization_id,
@@ -72,6 +74,26 @@ export default function AppLayout() {
 
   const isAdmin = isAdminUser(user, levels);
   const orgState = useOrganization(user);
+
+  // A workspace owner whose workspace predates administrator bootstrap is
+  // promoted on their next visit, restoring the admin menu and Employees tab.
+  useEffect(() => {
+    const owner = orgState.org?.owner_email?.toLowerCase();
+    if (!user?.email || !user.organization_id || levelsLoading || isAdmin) return;
+    if (!owner || owner !== user.email.toLowerCase()) return;
+    let cancelled = false;
+    base44.functions
+      .invoke('organizationCommand', { action: 'ensure_owner_admin' })
+      .then((response) => {
+        if (cancelled || !response?.data?.promoted) return;
+        queryClient.invalidateQueries({ queryKey: ['user-levels'] });
+        return base44.auth.me().then(setUser);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.email, user?.organization_id, levelsLoading, isAdmin, orgState.org?.owner_email]);
 
   useEffect(() => {
     setMobileOpen(false);

@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { normalizePlan, planSeatLimit } from '../../shared/plans.ts';
+import { seedDefaultLevels, promoteWorkspaceAdmin } from '../../shared/workspaceAdmin.ts';
 
 const MANAGER_ROLES = new Set(['admin', 'operations_manager', 'supervisor']);
 const UPDATE_FIELDS = new Set(['name', 'settings', 'member_emails', 'pending_invites']);
@@ -34,6 +35,20 @@ export default async function (req: Request): Promise<Response> {
       return Response.json({ organization: { id: organization.id, name: organization.name }, invite });
     }
 
+    // Repair for workspaces created before administrator bootstrap existed: only
+    // the workspace's recorded owner is ever promoted, never any other member.
+    if (body.action === 'ensure_owner_admin') {
+      if (!user.organization_id) return Response.json({ error: 'Organization required' }, { status: 400 });
+      const workspace: any = await svc.entities.Organization.get(user.organization_id);
+      if (!workspace) return Response.json({ error: 'Organization not found' }, { status: 404 });
+      if (String(workspace.owner_email || '').toLowerCase() !== user.email.toLowerCase()) {
+        return Response.json({ promoted: false, reason: 'not_owner' });
+      }
+      await seedDefaultLevels(svc, workspace.id);
+      await promoteWorkspaceAdmin(svc, workspace.id, user.email, user.id);
+      return Response.json({ promoted: true });
+    }
+
     if (body.action === 'create_workspace') {
       if (user.organization_id) return Response.json({ error: 'User already has a workspace' }, { status: 409 });
       const name = String(body.name || '').trim().slice(0, 120);
@@ -51,6 +66,10 @@ export default async function (req: Request): Promise<Response> {
         seat_limit: planSeatLimit(plan) ?? 5,
         trial_ends_at: new Date(Date.now() + 14 * 86400000).toISOString(),
       });
+      // The creator is the workspace's first administrator, with the standard
+      // permission levels already seeded so the admin menu works immediately.
+      await seedDefaultLevels(svc, organization.id);
+      await promoteWorkspaceAdmin(svc, organization.id, user.email, user.id);
       return Response.json({ organization });
     }
 

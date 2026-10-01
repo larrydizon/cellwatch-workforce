@@ -61,7 +61,7 @@ export default function Employees() {
         <ShieldCheck className="h-8 w-8 mx-auto text-muted-foreground" />
         <p className="font-semibold">Access restricted</p>
         <p className="text-sm text-muted-foreground">
-          Only administrators and the company owner can view the employee directory.
+          Only workspace administrators can view the employee directory.
         </p>
         <p className="text-xs text-muted-foreground pt-2">
           Signed in as {user.email} · {userLevelLabel(user, levels)}
