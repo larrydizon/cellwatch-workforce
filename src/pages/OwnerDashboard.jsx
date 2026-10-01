@@ -1,40 +1,30 @@
-import React, { useEffect, useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, ShieldCheck, ArrowLeft } from 'lucide-react';
-import OwnerMetrics from '@/components/owner/OwnerMetrics';
-import TenantTable from '@/components/owner/TenantTable';
-import OwnerAccessDenied from '@/components/owner/OwnerAccessDenied';
+import SignupPanel from '@/components/owner/SignupPanel';
+import RevenuePanel from '@/components/owner/RevenuePanel';
 import OwnerConsoleNav from '@/components/owner/OwnerConsoleNav';
+import OwnerAccessDenied from '@/components/owner/OwnerAccessDenied';
 
-export default function OwnerConsole() {
-  const queryClient = useQueryClient();
-  const [filter, setFilter] = useState('all');
-  const [term, setTerm] = useState('');
-  const [search, setSearch] = useState('');
-
-  useEffect(() => {
-    const timer = setTimeout(() => setSearch(term.trim()), 300);
-    return () => clearTimeout(timer);
-  }, [term]);
-
+export default function OwnerDashboard() {
   const { data, isLoading, isFetching, error, refetch } = useQuery({
-    queryKey: ['owner-console', filter, search],
+    queryKey: ['owner-analytics'],
     queryFn: async () => {
-      const response = await base44.functions.invoke('ownerConsole', { action: 'list', filter, search });
+      const response = await base44.functions.invoke('ownerAnalytics', {});
       return response.data;
     },
     retry: false,
-    placeholderData: (previous) => previous,
+    // Keeps the numbers live without a manual reload.
+    refetchInterval: 60000,
+    refetchIntervalInBackground: false,
   });
 
   const status = error?.response?.status;
   if (status === 401 || status === 403) {
     return <OwnerAccessDenied signedOut={status === 401} />;
   }
-
-  const handleChanged = () => queryClient.invalidateQueries({ queryKey: ['owner-console'] });
 
   return (
     <div className="min-h-screen bg-background">
@@ -45,25 +35,20 @@ export default function OwnerConsole() {
               <ShieldCheck className="h-5 w-5 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="font-heading text-base font-semibold leading-tight">Platform Console</h1>
-              <p className="text-xs text-muted-foreground">Cellwatch internal · all tenant workspaces</p>
+              <h1 className="font-heading text-base font-semibold leading-tight">Platform Overview</h1>
+              <p className="text-xs text-muted-foreground">Cellwatch internal · signups & revenue</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <OwnerConsoleNav />
-            {data?.generated_at && (
-              <span className="text-xs text-muted-foreground hidden md:inline">
-                Updated {new Date(data.generated_at).toLocaleTimeString()}
-              </span>
-            )}
             <Button variant="outline" size="sm" className="gap-2" onClick={() => refetch()} disabled={isFetching}>
               <RefreshCw className={isFetching ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
-              Refresh
+              <span className="hidden sm:inline">Refresh</span>
             </Button>
             <Button variant="ghost" size="sm" className="gap-2" asChild>
               <a href="/dashboard">
                 <ArrowLeft className="h-4 w-4" />
-                <span className="hidden sm:inline">Back to app</span>
+                <span className="hidden lg:inline">Back to app</span>
               </a>
             </Button>
           </div>
@@ -73,21 +58,18 @@ export default function OwnerConsole() {
       <main className="max-w-7xl mx-auto px-6 py-6 space-y-5">
         {error && status !== 401 && status !== 403 && (
           <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            {error.response?.data?.error || 'Could not load the console. Try refreshing.'}
+            {error.response?.data?.error || 'Could not load the dashboard. Try refreshing.'}
           </div>
         )}
 
-        <OwnerMetrics metrics={data?.metrics} />
+        <SignupPanel signups={isLoading ? null : data?.signups} />
+        <RevenuePanel revenue={isLoading ? null : data?.revenue} />
 
-        <TenantTable
-          tenants={data?.tenants || []}
-          loading={isLoading}
-          filter={filter}
-          onFilterChange={setFilter}
-          search={term}
-          onSearchChange={setTerm}
-          onChanged={handleChanged}
-        />
+        {data?.generated_at && (
+          <p className="text-xs text-muted-foreground text-center">
+            Figures refresh automatically every minute · last updated {new Date(data.generated_at).toLocaleTimeString()}
+          </p>
+        )}
       </main>
     </div>
   );

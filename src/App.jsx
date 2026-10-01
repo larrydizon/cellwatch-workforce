@@ -26,6 +26,7 @@ import AuditLog from '@/pages/AuditLog';
 import MyForms from '@/pages/MyForms';
 import Onboarding from '@/pages/Onboarding';
 import OwnerConsole from '@/pages/OwnerConsole';
+import OwnerDashboard from '@/pages/OwnerDashboard';
 import Billing from '@/pages/Billing';
 import Payroll from '@/pages/Payroll';
 import Landing from '@/pages/Landing';
@@ -68,6 +69,7 @@ const AuthenticatedApp = () => {
       >
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/owner-console" element={<OwnerConsole />} />
+        <Route path="/owner-dashboard" element={<OwnerDashboard />} />
         <Route element={<AppLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/employees" element={<Employees />} />
