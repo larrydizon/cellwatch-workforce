@@ -11,7 +11,7 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Calendar, Briefcase, Clock,
-  FileText, MessageSquare, Settings, Bell, UmbrellaOff, LayoutGrid, ClipboardList, CreditCard, User as UserIcon, MapPin
+  FileText, MessageSquare, Settings, Bell, UmbrellaOff, LayoutGrid, ClipboardList, CreditCard, User as UserIcon, MapPin, Building2
 } from 'lucide-react';
 import useShiftReminders from '@/hooks/useShiftReminders';
 import useAutoClockOut from '@/hooks/useAutoClockOut';
@@ -24,6 +24,7 @@ import { LocationConsentProvider } from '@/lib/LocationConsentContext';
 import LocationConsentNotice from '@/components/timeclock/LocationConsentNotice';
 import PresenceConsentNotice from '@/components/timeclock/PresenceConsentNotice';
 import CompanyLogo from './CompanyLogo';
+import useBranding from '@/hooks/useBranding';
 
 const mobileNavItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
@@ -41,6 +42,7 @@ const mobileNavItems = [
   { label: 'Chat', icon: MessageSquare, path: '/chat' },
   { label: 'Notifications', icon: Bell, path: '/notifications' },
   { label: 'Billing', icon: CreditCard, path: '/billing' },
+  { label: 'Company Profile', icon: Building2, path: '/company-profile' },
   { label: 'Settings', icon: Settings, path: '/settings' },
 ];
 
@@ -77,6 +79,9 @@ export default function AppLayout() {
 
   const isAdmin = isAdminUser(user, levels);
   const orgState = useOrganization(user);
+
+  // Apply the workspace's saved brand colours and light/dark preference.
+  useBranding(orgState.org);
 
   // A workspace owner whose workspace predates administrator bootstrap is
   // promoted on their next visit, restoring the admin menu and Employees tab.

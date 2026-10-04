@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Calendar, Briefcase, Clock,
   FileText, MessageSquare, Settings, ChevronLeft, ChevronRight,
-  ClipboardList, Bell, UmbrellaOff, LayoutGrid, CreditCard, DollarSign, User as UserIcon, ClipboardCheck, ScrollText, MapPin
+  ClipboardList, Bell, UmbrellaOff, LayoutGrid, CreditCard, DollarSign, User as UserIcon, ClipboardCheck, ScrollText, MapPin, Building2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import CompanyLogo from './CompanyLogo';
@@ -27,6 +27,7 @@ const navItems = [
   { label: 'Notifications', icon: Bell, path: '/notifications' },
   { label: 'Billing', icon: CreditCard, path: '/billing' },
   { label: 'Audit Log', icon: ScrollText, path: '/audit-log', adminOnly: true },
+  { label: 'Company Profile', icon: Building2, path: '/company-profile' },
   { label: 'Settings', icon: Settings, path: '/settings' },
 ];
 

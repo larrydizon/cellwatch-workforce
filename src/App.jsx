@@ -18,6 +18,7 @@ import Chat from '@/pages/Chat';
 import Notifications from '@/pages/Notifications';
 import Profile from '@/pages/Profile';
 import Settings from '@/pages/Settings';
+import CompanyProfile from '@/pages/CompanyProfile';
 import Leave from '@/pages/Leave';
 import AdminOverview from '@/pages/AdminOverview';
 import Forms from '@/pages/Forms';
@@ -82,6 +83,7 @@ const AuthenticatedApp = () => {
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/company-profile" element={<CompanyProfile />} />
           <Route path="/leave" element={<Leave />} />
           <Route path="/admin-overview" element={<AdminOverview />} />
           <Route path="/forms" element={<Forms />} />

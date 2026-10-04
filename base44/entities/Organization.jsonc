@@ -14,6 +14,56 @@
       "type": "string",
       "description": "Short company description shown on the company settings card"
     },
+    "brand_color": {
+      "type": "string",
+      "description": "Primary brand colour as a hex value, applied to buttons, links and highlights"
+    },
+    "brand_accent": {
+      "type": "string",
+      "description": "Secondary brand colour as a hex value, used for charts and secondary highlights"
+    },
+    "appearance": {
+      "type": "string",
+      "enum": [
+        "dark",
+        "light",
+        "system"
+      ],
+      "default": "dark",
+      "description": "Light, dark, or device-matched appearance for the workspace"
+    },
+    "legal_name": {
+      "type": "string",
+      "description": "Registered legal / trading name when it differs from the display name"
+    },
+    "business_id": {
+      "type": "string",
+      "description": "Company or business registration number"
+    },
+    "industry": {
+      "type": "string",
+      "description": "Industry the company operates in"
+    },
+    "timezone": {
+      "type": "string",
+      "description": "IANA timezone for the company e.g. Pacific/Auckland"
+    },
+    "address": {
+      "type": "string",
+      "description": "Company postal or physical address"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Company contact phone number"
+    },
+    "email": {
+      "type": "string",
+      "description": "Company contact email address"
+    },
+    "website": {
+      "type": "string",
+      "description": "Company website address"
+    },
     "plan": {
       "type": "string",
       "enum": [

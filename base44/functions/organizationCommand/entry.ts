@@ -4,7 +4,15 @@ import { seedDefaultLevels, promoteWorkspaceAdmin } from '../../shared/workspace
 import { seedStarterForms } from '../../shared/starterForms.ts';
 
 const MANAGER_ROLES = new Set(['admin', 'operations_manager', 'supervisor']);
-const UPDATE_FIELDS = new Set(['name', 'logo', 'description', 'settings', 'member_emails', 'pending_invites']);
+const UPDATE_FIELDS = new Set([
+  'name', 'logo', 'description', 'settings', 'member_emails', 'pending_invites',
+  'brand_color', 'brand_accent', 'appearance',
+  'address', 'phone', 'email', 'website',
+  'legal_name', 'business_id', 'industry', 'timezone',
+]);
+const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
+const PROFILE_TEXT_FIELDS = ['address', 'phone', 'email', 'website', 'legal_name', 'business_id', 'industry', 'timezone'];
+const APPEARANCES = new Set(['dark', 'light', 'system']);
 
 function sanitize(value: any, allowed: Set<string>) {
   const output: Record<string, unknown> = {};
@@ -90,6 +98,25 @@ export default async function (req: Request): Promise<Response> {
     }
 
     const changes: any = sanitize(body.changes, UPDATE_FIELDS);
+    if (changes.name !== undefined) {
+      const name = String(changes.name || '').trim().slice(0, 120);
+      if (!name) return Response.json({ error: 'Organization name is required' }, { status: 400 });
+      changes.name = name;
+    }
+    if (changes.logo !== undefined) changes.logo = String(changes.logo || '').trim().slice(0, 500);
+    if (changes.description !== undefined) changes.description = String(changes.description || '').trim().slice(0, 500);
+    for (const field of PROFILE_TEXT_FIELDS) {
+      if (changes[field] !== undefined) changes[field] = String(changes[field] || '').trim().slice(0, 200);
+    }
+    if (changes.brand_color !== undefined) {
+      changes.brand_color = HEX_COLOR.test(String(changes.brand_color || '')) ? changes.brand_color : '';
+    }
+    if (changes.brand_accent !== undefined) {
+      changes.brand_accent = HEX_COLOR.test(String(changes.brand_accent || '')) ? changes.brand_accent : '';
+    }
+    if (changes.appearance !== undefined) {
+      changes.appearance = APPEARANCES.has(changes.appearance) ? changes.appearance : 'dark';
+    }
     if (changes.member_emails) {
       changes.member_emails = [...new Set(
         changes.member_emails.map((item: unknown) => String(item).trim().toLowerCase()).filter(Boolean)
