@@ -12,6 +12,7 @@ import { saveOrgSettings } from '@/lib/orgSettings';
 import { logAudit } from '@/lib/auditLog';
 import { isAdminUser } from '@/lib/employeeProfile';
 import useOrganization from '@/hooks/useOrganization';
+import CompanyCard from '@/components/settings/CompanyCard';
 
 const INTERVAL_OPTIONS = [
   { label: 'Disabled', value: '0' },
@@ -90,6 +91,8 @@ export default function Settings() {
           {canEdit ? 'Manage your workspace preferences' : 'Your workspace preferences (view only)'}
         </p>
       </div>
+
+      <CompanyCard org={orgState.org} orgId={orgId} user={user} canEdit={canEdit} />
 
       <Card>
         <CardHeader>

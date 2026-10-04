@@ -6,6 +6,7 @@ import {
   ClipboardList, Bell, UmbrellaOff, LayoutGrid, CreditCard, DollarSign, User as UserIcon, ClipboardCheck, ScrollText, MapPin
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import CompanyLogo from './CompanyLogo';
 
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
@@ -29,7 +30,7 @@ const navItems = [
   { label: 'Settings', icon: Settings, path: '/settings' },
 ];
 
-export default function Sidebar({ collapsed, onToggle, user, isAdmin }) {
+export default function Sidebar({ collapsed, onToggle, user, isAdmin, org }) {
   const location = useLocation();
   const hasAdminAccess = ['admin', 'operations_manager', 'supervisor'].includes(user?.role);
 
@@ -47,13 +48,13 @@ export default function Sidebar({ collapsed, onToggle, user, isAdmin }) {
         "flex items-center h-16 px-4 border-b border-sidebar-border",
         collapsed ? "justify-center" : "gap-3"
       )}>
-        <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
-          <span className="text-primary-foreground font-bold text-sm">CW</span>
-        </div>
+        <CompanyLogo org={org} className="h-8 w-8" textClassName="text-sm" />
         {!collapsed && (
           <div className="overflow-hidden">
-            <p className="font-bold text-sm tracking-tight text-sidebar-foreground">Cellwatch</p>
-            <p className="text-[10px] text-sidebar-foreground/60 uppercase tracking-widest">Workforce</p>
+            <p className="font-bold text-sm tracking-tight text-sidebar-foreground truncate">
+              {org?.name || 'My Company'}
+            </p>
+            <p className="text-[10px] text-sidebar-foreground/60 uppercase tracking-widest">Workspace</p>
           </div>
         )}
       </div>

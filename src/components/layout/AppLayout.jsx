@@ -23,6 +23,7 @@ import useLiveNotifications from '@/hooks/useLiveNotifications';
 import { LocationConsentProvider } from '@/lib/LocationConsentContext';
 import LocationConsentNotice from '@/components/timeclock/LocationConsentNotice';
 import PresenceConsentNotice from '@/components/timeclock/PresenceConsentNotice';
+import CompanyLogo from './CompanyLogo';
 
 const mobileNavItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
@@ -103,18 +104,16 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} user={user} isAdmin={isAdmin} />
+      <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} user={user} isAdmin={isAdmin} org={orgState.org} />
 
       {/* Mobile sidebar sheet */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent side="left" className="w-[260px] p-0 bg-sidebar text-sidebar-foreground border-sidebar-border">
           <div className="flex items-center h-16 px-4 border-b border-sidebar-border gap-3">
-            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">CW</span>
-            </div>
-            <div>
-              <p className="font-bold text-sm text-sidebar-foreground">Cellwatch</p>
-              <p className="text-[10px] text-sidebar-foreground/60 uppercase tracking-widest">Workforce</p>
+            <CompanyLogo org={orgState.org} className="h-8 w-8" textClassName="text-sm" />
+            <div className="min-w-0">
+              <p className="font-bold text-sm text-sidebar-foreground truncate">{orgState.org?.name || 'My Company'}</p>
+              <p className="text-[10px] text-sidebar-foreground/60 uppercase tracking-widest">Workspace</p>
             </div>
           </div>
           <nav className="py-4 px-2 space-y-1">
@@ -148,7 +147,7 @@ export default function AppLayout() {
         "transition-all duration-300",
         collapsed ? "md:ml-[64px]" : "md:ml-[240px]"
       )}>
-        <TopBar user={user} onMobileMenuOpen={() => setMobileOpen(true)} />
+        <TopBar user={user} onMobileMenuOpen={() => setMobileOpen(true)} org={orgState.org} />
         <main className="p-4 md:p-6 pb-24 md:pb-6 min-h-[calc(100vh-4rem)]">
           {isAdmin && <PlanStatusBanner orgState={orgState} />}
           <LocationConsentProvider user={user}>

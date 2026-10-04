@@ -43,9 +43,6 @@ const AuthenticatedApp = () => {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold">CW</span>
-          </div>
           <div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin"></div>
         </div>
       </div>

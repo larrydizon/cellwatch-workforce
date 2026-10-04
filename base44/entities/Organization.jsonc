@@ -6,6 +6,14 @@
       "type": "string",
       "description": "Company / organization name"
     },
+    "logo": {
+      "type": "string",
+      "description": "Public URL of the company logo shown throughout the signed-in app"
+    },
+    "description": {
+      "type": "string",
+      "description": "Short company description shown on the company settings card"
+    },
     "plan": {
       "type": "string",
       "enum": [

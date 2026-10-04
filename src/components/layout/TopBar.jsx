@@ -4,8 +4,9 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import useLiveNotifications from '@/hooks/useLiveNotifications';
+import CompanyLogo from './CompanyLogo';
 
-export default function TopBar({ user, onMobileMenuOpen }) {
+export default function TopBar({ user, onMobileMenuOpen, org }) {
   const { data: notifications = [] } = useQuery({
     queryKey: ['unread-notifications'],
     queryFn: async () => {
@@ -26,10 +27,8 @@ export default function TopBar({ user, onMobileMenuOpen }) {
           <Menu className="h-5 w-5" />
         </button>
         <div className="md:hidden flex items-center gap-2">
-          <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-xs">CW</span>
-          </div>
-          <span className="font-semibold text-sm">Cellwatch</span>
+          <CompanyLogo org={org} className="h-7 w-7" textClassName="text-xs" />
+          <span className="font-semibold text-sm truncate max-w-[140px]">{org?.name || 'My Company'}</span>
         </div>
       </div>
 

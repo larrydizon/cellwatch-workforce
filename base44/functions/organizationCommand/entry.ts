@@ -1,9 +1,10 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { normalizePlan, planSeatLimit } from '../../shared/plans.ts';
 import { seedDefaultLevels, promoteWorkspaceAdmin } from '../../shared/workspaceAdmin.ts';
+import { seedStarterForms } from '../../shared/starterForms.ts';
 
 const MANAGER_ROLES = new Set(['admin', 'operations_manager', 'supervisor']);
-const UPDATE_FIELDS = new Set(['name', 'settings', 'member_emails', 'pending_invites']);
+const UPDATE_FIELDS = new Set(['name', 'logo', 'description', 'settings', 'member_emails', 'pending_invites']);
 
 function sanitize(value: any, allowed: Set<string>) {
   const output: Record<string, unknown> = {};
@@ -70,6 +71,11 @@ export default async function (req: Request): Promise<Response> {
       // permission levels already seeded so the admin menu works immediately.
       await seedDefaultLevels(svc, organization.id);
       await promoteWorkspaceAdmin(svc, organization.id, user.email, user.id);
+      // The curated starter forms give the new workspace a usable Forms tab
+      // from day one. Safe to retry — seeding is idempotent.
+      await seedStarterForms(svc, organization.id).catch((error: any) => {
+        console.error('starter form seeding failed', error?.message);
+      });
       return Response.json({ organization });
     }
 

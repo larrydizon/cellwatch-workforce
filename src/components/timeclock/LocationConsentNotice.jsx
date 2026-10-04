@@ -49,7 +49,7 @@ export default function LocationConsentNotice() {
                 Location tracking
               </DialogPrimitive.Title>
               <DialogPrimitive.Description className="text-sm text-muted-foreground">
-                Cellwatch records where work happens. Before we start, we need your
+                Your company records where work happens. Before we start, we need your
                 one-time consent — asked once, and never again.
               </DialogPrimitive.Description>
             </div>
