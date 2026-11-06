@@ -41,18 +41,9 @@ export default function Onboarding() {
       try {
         const response = await base44.functions.invoke('organizationCommand', { action: 'claim_invite' });
         const invitedOrg = response?.data?.organization;
-        const pending = response?.data?.invite;
         if (invitedOrg?.id) {
-          await base44.auth.updateMe({ organization_id: invitedOrg.id });
-          // Apply the details the admin entered when they were added
-          if (pending) {
-            await base44.auth.updateMe({
-              phone: pending.phone || '',
-              position: pending.position || '',
-              job_title: pending.job_title || '',
-              user_level: pending.user_level || '',
-            });
-          }
+          // Membership, and the details the admin entered when they were added,
+          // were applied server-side when the invitation was claimed.
           await syncEmployeeRecord(await base44.auth.me(), invitedOrg.id);
           navigate('/dashboard', { replace: true });
           return;
@@ -72,7 +63,6 @@ export default function Onboarding() {
     try {
       const created = await runOrganizationCommand('create_workspace', { name: orgName.trim(), plan: selectedPlan });
       localStorage.removeItem('signup_plan');
-      await base44.auth.updateMe({ organization_id: created.id });
       await syncEmployeeRecord(await base44.auth.me(), created.id);
       setOrg(created);
       setCompanyName(created.name || orgName.trim());

@@ -57,7 +57,7 @@ export default async function (req: Request): Promise<Response> {
               await svc.integrations.Core.SendEmail({
                 to: assignment.employee_email,
                 subject: `Overdue form: ${assignment.form_title || 'Form'}`,
-                body: `Hi ${assignment.employee_name || 'there'},\n\nYour form "${assignment.form_title || 'Form'}" was due on ${assignment.due_date} and is now overdue. Please complete it as soon as possible.\n\n— Cellwatch Workforce`,
+                body: `Hi ${assignment.employee_name || 'there'},\n\nYour form "${assignment.form_title || 'Form'}" was due on ${assignment.due_date} and is now overdue. Please complete it as soon as possible.\n\n— ${org.name || 'Your workplace'}`,
               });
             } catch { /* email is best-effort */ }
           }

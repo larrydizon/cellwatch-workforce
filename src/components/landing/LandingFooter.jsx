@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 export default function LandingFooter() {
   return (
@@ -10,10 +11,12 @@ export default function LandingFooter() {
             Workforce management for field service teams.
           </p>
         </div>
-        <div className="flex items-center gap-6 text-sm text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
           <a href="#features" className="transition-colors hover:text-foreground">Features</a>
           <a href="#how-it-works" className="transition-colors hover:text-foreground">How it works</a>
           <a href="#pricing" className="transition-colors hover:text-foreground">Pricing</a>
+          <Link to="/privacy" className="transition-colors hover:text-foreground">Privacy</Link>
+          <Link to="/terms" className="transition-colors hover:text-foreground">Terms</Link>
         </div>
       </div>
       <div className="border-t border-border/60">

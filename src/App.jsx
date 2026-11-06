@@ -32,6 +32,8 @@ import OwnerDashboard from '@/pages/OwnerDashboard';
 import Billing from '@/pages/Billing';
 import Payroll from '@/pages/Payroll';
 import Landing from '@/pages/Landing';
+import Privacy from '@/pages/Privacy';
+import Terms from '@/pages/Terms';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
@@ -105,6 +107,8 @@ function App() {
         <Router>
           <Routes>
             <Route path="/" element={<Landing />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
             <Route path="/*" element={<AuthenticatedApp />} />
           </Routes>
         </Router>

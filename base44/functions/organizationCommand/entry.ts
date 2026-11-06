@@ -41,6 +41,18 @@ export default async function (req: Request): Promise<Response> {
       const invite = (organization.pending_invites || []).find(
         (item: any) => item.email?.toLowerCase() === user.email.toLowerCase(),
       ) || null;
+      // Membership is granted here, by the server, only for an organization the
+      // user was actually invited to. The field is locked on the user record, so
+      // nobody can point their own account at another workspace.
+      await svc.entities.User.update(user.id, {
+        organization_id: organization.id,
+        ...(invite ? {
+          phone: invite.phone || '',
+          position: invite.position || '',
+          job_title: invite.job_title || '',
+          user_level: invite.user_level || '',
+        } : {}),
+      });
       return Response.json({ organization: { id: organization.id, name: organization.name }, invite });
     }
 
@@ -84,6 +96,8 @@ export default async function (req: Request): Promise<Response> {
       await seedStarterForms(svc, organization.id).catch((error: any) => {
         console.error('starter form seeding failed', error?.message);
       });
+      // The creator's membership is set here rather than from the browser.
+      await svc.entities.User.update(user.id, { organization_id: organization.id });
       return Response.json({ organization });
     }
 

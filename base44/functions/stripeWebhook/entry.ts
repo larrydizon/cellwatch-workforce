@@ -1,6 +1,30 @@
 import Stripe from 'npm:stripe@17.7.0';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
-import { planSeatLimit } from '../../shared/plans.ts';
+import { PLAN_SEATS, planSeatLimit } from '../../shared/plans.ts';
+
+// Statuses Stripe uses on a checkout session whose money has actually landed.
+const SETTLED = new Set(['paid', 'no_payment_required']);
+
+// Base44's own self-test charge carries this flag; it is never a customer order.
+function isTestCheckout(object: any): boolean {
+  return String(object?.metadata?.base44_test_checkout || '') === 'true';
+}
+
+// Only plan keys we actually sell may be written onto an organization.
+function resolvePlan(value: unknown, fallback: string): string {
+  const key = String(value || '');
+  return key && key in PLAN_SEATS ? key : fallback;
+}
+
+// The subscription's own price is the authoritative source, so a plan cannot be
+// asserted by a stale metadata value or a tampered checkout payload.
+function planFromPriceId(priceId: unknown, fallback: string): string {
+  const id = String(priceId || '');
+  if (!id) return fallback;
+  if (id === Deno.env.get('STRIPE_STARTER_PRICE_ID')) return 'starter';
+  if (id === Deno.env.get('STRIPE_PRO_PRICE_ID')) return 'pro';
+  return fallback;
+}
 
 export default async function (req: Request): Promise<Response> {
   const stripeSecret = Deno.env.get('STRIPE_SECRET_KEY');
@@ -30,13 +54,30 @@ export default async function (req: Request): Promise<Response> {
     }
     if (!org) return Response.json({ received: true });
 
-    if (event.type === 'checkout.session.completed') {
-      const plan = object.metadata?.plan;
+    // Paid access is only ever granted by a signature-verified event whose
+    // payment has actually settled. `checkout.session.completed` can still be
+    // unpaid when a payment method settles later, so those wait for
+    // `checkout.session.async_payment_succeeded` instead of switching the
+    // workspace on early.
+    const isCheckout = event.type === 'checkout.session.completed'
+      || event.type === 'checkout.session.async_payment_succeeded';
+
+    if (isCheckout) {
+      if (isTestCheckout(object)) {
+        return Response.json({ received: true, skipped: 'test_checkout' });
+      }
+      const settled = event.type === 'checkout.session.async_payment_succeeded'
+        || SETTLED.has(String(object.payment_status));
+      if (!settled) {
+        return Response.json({ received: true, pending_payment: true });
+      }
+      const plan = resolvePlan(object.metadata?.plan, org.plan || 'free');
       await svc.entities.Organization.update(org.id, {
         plan,
         plan_status: 'active',
         seat_limit: planSeatLimit(plan) ?? org.seat_limit,
         cancel_at_period_end: false,
+        trial_ends_at: null,
         stripe_customer_id: String(object.customer),
         stripe_subscription_id: String(object.subscription),
       });
@@ -55,7 +96,8 @@ export default async function (req: Request): Promise<Response> {
     }
 
     if (event.type.startsWith('customer.subscription.') && event.type !== 'customer.subscription.deleted') {
-      const plan = object.metadata?.plan || org.plan;
+      const priceId = object.items?.data?.[0]?.price?.id;
+      const plan = planFromPriceId(priceId, resolvePlan(object.metadata?.plan, org.plan || 'free'));
       const status = object.status === 'active' || object.status === 'trialing'
         ? 'active'
         : object.status === 'canceled'
@@ -79,6 +121,7 @@ export default async function (req: Request): Promise<Response> {
     }
     return Response.json({ received: true });
   } catch (error: any) {
+    console.error('stripeWebhook failed:', error?.message);
     return Response.json({ error: error?.message || 'Invalid webhook' }, { status: 400 });
   }
 }

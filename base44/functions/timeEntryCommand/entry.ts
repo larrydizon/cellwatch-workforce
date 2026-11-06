@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { SHIFT_LIMIT_HOURS } from '../../shared/shiftLimits.ts';
 import { writeAudit } from '../../shared/audit.ts';
+import { isWorkspaceReadOnly } from '../../shared/access.ts';
 
 const MANAGER_ROLES = new Set(['admin', 'operations_manager', 'supervisor']);
 const MAX_SHIFT_HOURS = 24;
@@ -76,6 +77,41 @@ export default async function (req: Request): Promise<Response> {
         if (!job || job.organization_id !== user.organization_id) return fail('Job not found', 404);
         if (!isManager && !(job.assigned_workers || []).includes(user.email)) {
           return fail('You are not assigned to this job', 403);
+        }
+      }
+
+      // A lapsed workspace cannot start new shifts. Clocking out stays available
+      // so nobody is ever trapped in a shift they cannot end.
+      const organization: any = await svc.entities.Organization.get(user.organization_id).catch(() => null);
+      if (isWorkspaceReadOnly(organization)) {
+        return fail('This workspace is read-only until the subscription is renewed', 403);
+      }
+
+      // Mandatory pre-start forms are enforced here as well as in the screen, so a
+      // shift cannot begin without the safety check the workspace requires.
+      if (!actingForAnother) {
+        const assignments = listItems(await svc.entities.FormAssignment.filter({
+          organization_id: user.organization_id,
+          employee_email: employeeEmail,
+          status: 'pending',
+        }, { limit: 50 }));
+        if (assignments.length) {
+          const templates = listItems(await svc.entities.FormTemplate.filter({
+            organization_id: user.organization_id,
+            require_before_clockin: true,
+          }, { limit: 100 }));
+          const blocking = new Set(
+            templates
+              .filter((template: any) => template.form_type !== 'induction')
+              .map((template: any) => template.id),
+          );
+          const outstanding = assignments.filter((item: any) => blocking.has(item.form_template_id));
+          if (outstanding.length) {
+            return fail(
+              `${outstanding.length} required form${outstanding.length > 1 ? 's' : ''} must be completed before clocking in`,
+              409,
+            );
+          }
         }
       }
 

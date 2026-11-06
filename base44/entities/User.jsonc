@@ -4,7 +4,14 @@
   "properties": {
     "organization_id": {
       "type": "string",
-      "description": "The organization this user belongs to"
+      "description": "The organization this user belongs to. Locked: only a server command can set it, after verifying the person was invited.",
+      "rls": {
+        "update": {
+          "user_condition": {
+            "collaborator_role": "editor"
+          }
+        }
+      }
     },
     "phone": {
       "type": "string",
@@ -35,7 +42,14 @@
     },
     "user_level": {
       "type": "string",
-      "description": "The organization's user level assigned to this employee (admin managed)"
+      "description": "The organization's user level assigned to this employee. Locked: administrators set it from the employee editor, never the employee themselves.",
+      "rls": {
+        "update": {
+          "user_condition": {
+            "collaborator_role": "editor"
+          }
+        }
+      }
     },
     "ird_number": {
       "type": "string",

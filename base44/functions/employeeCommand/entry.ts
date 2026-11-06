@@ -1,4 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
+import { writeAudit } from '../../shared/audit.ts';
+import { isWorkspaceReadOnly, seatLimitFor } from '../../shared/access.ts';
 
 const MANAGER_ROLES = new Set(['admin', 'operations_manager', 'supervisor']);
 // Consent is personal: an employee records it for themselves, never for someone else.
@@ -60,6 +62,29 @@ export default async function (req: Request): Promise<Response> {
       email: requestedEmail,
     }, { limit: 1 });
     const existing = (Array.isArray(found) ? found : found?.items || [])[0];
+
+    // Adding a person is a paid change: the workspace must be writable and have a
+    // free seat. The screen blocks this too, but the server is what decides.
+    if (!existing) {
+      const organization: any = await svc.entities.Organization.get(user.organization_id).catch(() => null);
+      if (isWorkspaceReadOnly(organization)) {
+        return Response.json(
+          { error: 'This workspace is read-only until the subscription is renewed' },
+          { status: 403 },
+        );
+      }
+      const limit = seatLimitFor(organization);
+      if (limit !== null) {
+        const used = await svc.entities.Employee.count({ organization_id: user.organization_id });
+        if (used >= limit) {
+          return Response.json(
+            { error: `All ${limit} seats on this plan are in use. Upgrade to add more people.` },
+            { status: 409 },
+          );
+        }
+      }
+    }
+
     const payload = {
       ...fields,
       organization_id: user.organization_id,
@@ -71,6 +96,25 @@ export default async function (req: Request): Promise<Response> {
       : await svc.entities.Employee.create(payload);
     if (isManager && existing?.user_id) {
       await svc.entities.User.update(existing.user_id, cleanFields(fields, USER_FIELDS));
+    }
+
+    // A change of access level is a security event, so it is always recorded.
+    if (isManager && existing && (fields.user_level !== undefined || fields.role !== undefined)) {
+      const before = `${existing.user_level || ''}|${existing.role || ''}`;
+      const level = fields.user_level ?? existing.user_level ?? '';
+      const role = fields.role ?? existing.role ?? '';
+      if (before !== `${level}|${role}`) {
+        await writeAudit(base44, {
+          organization_id: user.organization_id,
+          actor_email: user.email,
+          actor_name: user.full_name,
+          category: 'security',
+          action: 'access_level_changed',
+          detail: `Access level for ${requestedEmail} set to ${level || 'none'} (${role || 'user'})`,
+          target: requestedEmail,
+          metadata: { from: before, to: `${level}|${role}` },
+        });
+      }
     }
     return Response.json({ entry });
   } catch (error: any) {
